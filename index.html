@@ -152,6 +152,7 @@
   }
   .btn:active { transform: scale(.95); }
   .btn.ghost { background: var(--white-soft); color: var(--ink); box-shadow: none; }
+  .btn.ig { background: linear-gradient(45deg, #f9a03f, #e1306c 55%, #833ab4); box-shadow: 0 8px 22px rgba(225,48,108,.35); }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
   /* 5. Carta */
@@ -264,6 +265,7 @@
   .arrow[disabled] { opacity: 0; pointer-events: none; }
   .arrow.next { animation: nudge 2s ease-in-out infinite; }
   @keyframes nudge { 0%,100% { translate: 0 0; } 50% { translate: 5px 0; } }
+  [hidden] { display: none !important; }
   button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -347,7 +349,8 @@
       <h2 class="in" style="--i:1">Háblame cuando despiertes</h2>
       <p class="lead in" style="--i:2">Quiero saber cómo va tu díaaaa. Háblame cualquier cosa, yo estaré pendiente. Muak muak 💋</p>
       <div class="row in" style="--i:3">
-        <a class="btn" id="replyBtn" target="_blank" rel="noopener">Escribirme 💬</a>
+        <a class="btn" id="replyBtn" target="_blank" rel="noopener">WhatsApp 💬</a>
+        <a class="btn ig" id="igBtn" target="_blank" rel="noopener">Instagram 📸</a>
         <button class="btn ghost" id="restart">Ver de nuevo ↺</button>
       </div>
     </section>
@@ -368,9 +371,11 @@
   const CONFIG = {
     nombre: "mi vidaaaa",       // ej: su nombre o "mi amor"
     firma: "Te adoro, muak muak",
-    // Tu número con código de país, sin + ni espacios (ej: "56912345678").
-    // Si lo dejas vacío, el botón "Escribirme" abre WhatsApp para elegir contacto.
-    whatsapp: "",
+    // Tu número con código de país, sin + ni espacios.
+    // Si lo dejas vacío, el botón de WhatsApp abre WhatsApp para elegir contacto.
+    whatsapp: "56941089585",
+    // Tu usuario de Instagram, sin @. Si lo dejas vacío, se oculta el botón.
+    instagram: "d_nahue_g",
     carta: [
       "Wenos días mi amor,",
       "Antes de decir nada, me di cuenta de que te despiertas mucho más temprano que yo, así que para darte los buenos días hice esto para ti.",
@@ -405,6 +410,8 @@
 
   const msg = encodeURIComponent("Buenos días amor ☀️ ");
   $("replyBtn").href = CONFIG.whatsapp ? `https://wa.me/${CONFIG.whatsapp}?text=${msg}` : `https://wa.me/?text=${msg}`;
+  if (CONFIG.instagram) $("igBtn").href = `https://ig.me/m/${CONFIG.instagram}`;
+  else $("igBtn").hidden = true;
 
   // Ajusta la letra de la carta para que quepa entera sin scroll en cualquier pantalla
   function fitLetter() {
@@ -547,6 +554,7 @@
     go(0);
   });
   $("replyBtn").addEventListener("click", e => e.stopPropagation());
+  $("igBtn").addEventListener("click", e => e.stopPropagation());
 
   $("app").addEventListener("click", e => {
     const r = document.createElement("span");
