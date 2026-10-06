@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Buenos días, mi amor</title>
+<title>Buenos días, mi vida</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
@@ -155,7 +155,7 @@
   .seal { position: absolute; left: 50%; top: 72px; transform: translateX(-50%); z-index: 4; font-size: 30px; transition: opacity .3s; }
   .envelope.open .env-flap { transform: rotateX(180deg); z-index: 0; }
   .envelope.open .seal { opacity: 0; }
-  .envelope.open .letter { left: -12px; right: -12px; transform: translateY(-10px); height: min(440px, 62vh); z-index: 3; overflow-y: auto; box-shadow: 0 10px 30px rgba(74,44,64,.2); }
+  .envelope.open .letter { left: -12px; right: -12px; transform: translateY(30px); height: min(480px, 64vh); font-size: .9rem; z-index: 3; overflow-y: auto; box-shadow: 0 10px 30px rgba(74,44,64,.2); }
   .hint { font-size: .95rem; opacity: .75; }
 
   /* Escena 6: te amo */
@@ -211,7 +211,7 @@
   <section class="scene">
     <div class="sunrise"><div class="sun"></div><div class="horizon"></div></div>
     <h1>Buenos días,<br><span data-name></span></h1>
-    <p class="lead">Despertaste y el mundo ya es un poquito más bonito ☀️</p>
+    <p class="lead">Despertaste y ya se empezó a alegrar el día ☀️</p>
   </section>
 
   <!-- 2. ¿Cómo dormiste? -->
@@ -219,7 +219,7 @@
     <div class="sky-icon"><span class="moon">🌙</span><span class="sun2">🌞</span></div>
     <p class="zzz">z z z</p>
     <h2>¿Cómo dormiste?</h2>
-    <p class="lead">Espero que hayas soñado lindo… y si soñaste conmigo, mejor 😌</p>
+    <p class="lead">Espero que hayas descansado así ricooo y soñado conmigo, obvio 😌</p>
   </section>
 
   <!-- 3. ¿Cómo te sientes? -->
@@ -259,14 +259,14 @@
   <section class="scene">
     <div class="big-heart" id="bigHeart">❤️</div>
     <h1>Te amo mucho</h1>
-    <p class="lead">Muchísimo. Más que ayer y menos que mañana. (Toca el corazón 💥)</p>
+    <p class="lead">Te amo más que ayer y mucho menos que mañana 💞<br><small>(toca el corazón)</small></p>
   </section>
 
   <!-- 7. Háblame -->
   <section class="scene">
     <div class="phone">📱</div>
     <h2>Háblame cuando despiertes</h2>
-    <p class="lead">Cuéntame cómo amaneciste, qué vas a hacer hoy, todo. Quiero saberlo todo de ti 💕</p>
+    <p class="lead">Quiero saber cómo va tu díaaaa. Háblame cualquier cosa, yo estaré pendiente. Muak muak 💋</p>
     <div class="row">
       <a class="btn" id="replyBtn" target="_blank" rel="noopener">Escribirme 💬</a>
       <button class="btn ghost" id="restart">Ver de nuevo ↺</button>
@@ -286,32 +286,32 @@
      ✏️ PERSONALIZA AQUÍ
      ============================================================ */
   const CONFIG = {
-    nombre: "mi amor",          // ej: "Martina" o "mi niña"
-    firma: "Tu pololo que te adora",
+    nombre: "mi vidaaaa",       // ej: su nombre o "mi amor"
+    firma: "Te adoro, muak muak",
     // Tu número con código de país, sin + ni espacios (ej: "56912345678").
     // Si lo dejas vacío, el botón "Escribirme" abre WhatsApp para elegir contacto.
     whatsapp: "",
     carta: [
-      "Mi amor:",
-      "Antes de que empiece tu día quería ser lo primero que leas. Ojalá hayas descansado rico y despiertes con una sonrisa.",
-      "Hoy va a ser un buen día, y si se pone difícil, acuérdate que aquí estoy yo, pensando en ti y apoyándote en todo.",
-      "Eres increíble, más de lo que crees. Gracias por existir y por elegirme cada día.",
+      "Wenos días mi amor,",
+      "Antes de decir nada, me di cuenta de que te despiertas mucho más temprano que yo, así que para darte los buenos días hice esto para ti.",
+      "Este día será increíble, wawa. Tú puedes con todo y más. Eres increíblemente magnífica y haces que mis días sean mucho más bonitos. Acuérdate que yo estaré pendiente a cualquier cosa que me digas, te pase o me cuentes.",
+      "Te amo demasiado y que tengas un hermoso y bonito día.",
+      "Háblame cuando despiertes, quiero saber cómo va tu díaaaa.",
     ],
     frases: [
-      "Hoy es un nuevo comienzo. Todo lo que necesitas para brillar ya está en ti.",
-      "No tiene que ser perfecto, solo tiene que ser tuyo. Paso a paso, mi amor.",
+      "Que te vaya excelente hoy. Te amo 💛",
+      "Será un excelente día, mi vida. ¡Dale con todo!",
+      "Tú puedes con todo y más, wawa. Eres increíblemente magnífica ✨",
+      "Haces que mis días sean mucho más bonitos. Hoy te toca brillar a ti.",
       "Eres más fuerte de lo que piensas y más capaz de lo que imaginas.",
-      "Que tu café esté rico y tu día sea aún mejor ☕",
-      "Sonríe: hay alguien que piensa en ti desde que abrió los ojos (yo).",
-      "Las cosas buenas llegan a quienes no se rinden. Y tú nunca te rindes.",
       "Hoy no tienes que poder con todo. Solo con lo de hoy. Y puedes.",
     ],
     respuestasAnimo: {
-      feliz:   "¡Me encanta! Que esa sonrisa te dure todo el día 😍",
-      sueno:   "Cinco minutitos más… pero no más que eso, dormilona 😴💤",
-      cansada: "Tómate tu tiempo, desayuna rico y avanza tranquila. Yo te mando energía ⚡",
-      mimos:   "Te mando un abrazo gigante y mil besitos virtuales 🤗😘 (los reales después)",
-      lista:   "¡Esa es mi chica! Hoy te comes el mundo 🌎🔥",
+      feliz:   "Menkanta 😍 mándame fotos de esa sonrisa 📸",
+      sueno:   "No vayas a clases, ven conmigo 🙈💤",
+      cansada: "Poexita mi bebeee 🥺 después llegas a dormir",
+      mimos:   "Te mando infinitos besitos y abrazos 🤗😘 ya falta poco, wawita",
+      lista:   "¡Esa e mi mujelllll! 💪🔥 Tú puedes, mi amor",
     },
   };
 
