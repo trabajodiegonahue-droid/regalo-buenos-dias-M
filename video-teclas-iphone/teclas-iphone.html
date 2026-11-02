@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Teclas del iPhone</title>
+<!--
+  Animación para el video "Cómo funcionan las teclas del iPhone".
+  Todo se dibuja en función del tiempo con renderAt(t) (sin animaciones CSS),
+  así render.js puede capturar cada cuadro de forma exacta.
+  Abre el archivo en el navegador para verlo en vivo (se reproduce solo).
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#070914}
+body{font-family:Inter,"Noto Color Emoji",system-ui,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;overflow:hidden;
+  background:linear-gradient(180deg,#0a0d20 0%,#0e1133 55%,#090b1b 100%)}
+.blob{position:absolute;border-radius:50%}
+#b1{left:-420px;top:-380px;width:1200px;height:1200px;background:radial-gradient(circle,rgba(98,80,255,.38) 0%,rgba(98,80,255,0) 65%)}
+#b2{left:380px;top:1150px;width:1100px;height:1100px;background:radial-gradient(circle,rgba(0,160,255,.26) 0%,rgba(0,160,255,0) 65%)}
+#b3{left:-110px;top:420px;width:1300px;height:1300px}
+
+#header{position:absolute;left:0;right:0;top:86px;text-align:center}
+#pill{display:inline-block;font-weight:700;font-size:27px;letter-spacing:5px;text-transform:uppercase;
+  padding:13px 30px 12px;border-radius:999px;border:2px solid #8ab4ff;color:#8ab4ff;background:rgba(255,255,255,.04)}
+#title{font-family:"Inter Display",Inter,sans-serif;font-weight:800;letter-spacing:-2px;line-height:1.04;margin-top:30px;white-space:pre-line}
+#sub{font-weight:500;font-size:43px;line-height:1.28;color:#c8cce4;margin:20px auto 0;max-width:980px;white-space:pre-line}
+
+#vp{position:absolute;left:0;top:470px;width:1080px;height:1360px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 70px,#000 1320px,transparent 1360px)}
+#pw{position:absolute;left:0;top:0;width:470px;height:960px;transform-origin:0 0}
+#phone{position:absolute;inset:0;border-radius:88px;z-index:1;
+  background:linear-gradient(135deg,#767b87 0%,#33363d 28%,#555a64 62%,#26282d 100%);
+  box-shadow:0 50px 90px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.10)}
+#bezel{position:absolute;left:6px;top:6px;right:6px;bottom:6px;border-radius:82px;background:#040404}
+#screen{position:absolute;left:16px;top:16px;width:438px;height:928px;border-radius:70px;overflow:hidden;background:#000}
+.layer{position:absolute;left:0;top:0;width:438px;height:928px}
+
+.hw{position:absolute;width:12px;border-radius:5px;z-index:0;overflow:hidden;
+  background:linear-gradient(90deg,#3a3d44,#80858f 50%,#3a3d44)}
+.hw .g{position:absolute;inset:0;opacity:0}
+#hw-cam{background:linear-gradient(90deg,#15171b,#43474f 50%,#15171b);box-shadow:inset 0 0 0 1px #6c717b}
+.finger{position:absolute;width:80px;height:80px;border-radius:50%;z-index:3;opacity:0;
+  background:radial-gradient(circle at 38% 32%,#ffffff 0%,#e9ecf6 55%,#c9cede 100%);
+  box-shadow:0 10px 26px rgba(0,0,0,.45)}
+.ring{position:absolute;width:96px;height:96px;border-radius:50%;border:4px solid #fff;z-index:2;opacity:0}
+
+/* ---- pantalla: fondo, bloqueo, inicio ---- */
+#wall{background:
+  radial-gradient(circle at 18% 14%,#ff9a8b 0,rgba(255,154,139,0) 46%),
+  radial-gradient(circle at 88% 42%,#7b5cff 0,rgba(123,92,255,0) 52%),
+  radial-gradient(circle at 26% 88%,#1fd1f9 0,rgba(31,209,249,0) 52%),
+  linear-gradient(160deg,#2b1055,#5a6fd0)}
+.sb{position:absolute;top:19px;left:0;width:438px;height:22px;font-size:16.5px;font-weight:600}
+.sbt{position:absolute;left:54px;top:0}
+.sbr{position:absolute;right:32px;top:3px;display:flex;gap:6px;align-items:center}
+.ldate{position:absolute;top:96px;width:100%;text-align:center;font-size:21px;font-weight:600;color:rgba(255,255,255,.92)}
+.ltime{position:absolute;top:112px;width:100%;text-align:center;font-family:"Inter Display",Inter;font-size:126px;font-weight:700;letter-spacing:-3px;color:rgba(255,255,255,.96)}
+.notif{position:absolute;left:14px;right:14px;top:560px;height:78px;border-radius:22px;background:rgba(255,255,255,.26);display:flex;align-items:center;padding:0 14px;gap:12px}
+.notif .ni{width:40px;height:40px;border-radius:10px;background:linear-gradient(#5df07c,#21c045);display:flex;align-items:center;justify-content:center;font-size:22px}
+.notif b{font-size:15px;display:block}
+.notif span{font-size:15px;color:rgba(255,255,255,.9)}
+.notif i{position:absolute;right:18px;top:16px;font-style:normal;font-size:13px;color:rgba(255,255,255,.7)}
+.lbtn{position:absolute;bottom:54px;width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,.30);display:flex;align-items:center;justify-content:center;color:#fff}
+.lbtn div{width:24px;height:24px}
+.homebar{position:absolute;bottom:9px;left:152px;width:134px;height:5px;border-radius:3px;background:#fff}
+.app{position:absolute;width:74px;text-align:center}
+.app .ai{width:74px;height:74px;border-radius:19px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 2px 8px rgba(0,0,0,.22)}
+.app .an{font-size:12.5px;margin-top:6px;color:#fff;font-weight:500;text-shadow:0 1px 3px rgba(0,0,0,.45);white-space:nowrap;margin-left:-10px;margin-right:-10px}
+.dock{position:absolute;left:12px;right:12px;bottom:18px;height:104px;border-radius:40px;background:rgba(255,255,255,.24)}
+.search{position:absolute;top:756px;left:169px;width:100px;height:30px;border-radius:15px;background:rgba(255,255,255,.24);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center}
+
+/* ---- cámara ---- */
+#cam{background:#000}
+#vf{position:absolute;left:0;top:112px;width:438px;height:590px;overflow:hidden}
+#scene{position:absolute;left:0;top:0;width:438px;height:590px;transform-origin:232px 440px}
+.cicon{position:absolute;top:50px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.12);padding:9px;color:#fff}
+#zpills{position:absolute;top:640px;left:0;width:438px;display:flex;justify-content:center;align-items:center;gap:10px}
+.zp{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.5);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff}
+.zp.on{color:#ffd60a;width:48px;height:48px;font-size:14px}
+#modes{position:absolute;top:722px;width:100%;display:flex;justify-content:center;gap:26px;font-size:15px;font-weight:600;letter-spacing:1px;color:#fff}
+#modes .on{color:#ffd60a}
+#shutter{position:absolute;left:181px;top:770px;width:76px;height:76px;border-radius:50%;border:5px solid #fff}
+#shutIn{position:absolute;left:4px;top:4px;width:58px;height:58px;border-radius:50%;background:#fff}
+#camthumb{position:absolute;left:42px;top:784px;width:48px;height:48px;border-radius:10px;background:#1c1c1e;overflow:hidden}
+#camthumb div{position:absolute;inset:0;background:linear-gradient(180deg,#5aa9ff,#ffd2a1 60%,#4a5ba8 61%,#2f7d5b);opacity:0}
+#flipbtn{position:absolute;left:348px;top:784px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.15);padding:12px;color:#fff}
+#rec{position:absolute;top:62px;left:154px;width:130px;height:32px;border-radius:9px;background:#ff3b30;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;opacity:0;font-variant-numeric:tabular-nums}
+#zui{position:absolute;left:350px;top:470px;width:80px;height:330px;opacity:0}
+#zbox{position:absolute;left:30px;top:20px;width:46px;height:300px;border-radius:23px;background:rgba(0,0,0,.5);overflow:hidden}
+#zstrip{position:absolute;left:14px;top:-600px;width:18px;height:1500px;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.8) 0 2px,transparent 2px 15px)}
+#zmark{position:absolute;left:6px;top:148px;width:34px;height:4px;border-radius:2px;background:#ffd60a}
+#zval{position:absolute;right:56px;top:152px;font-size:17px;font-weight:800;color:#ffd60a;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+#zlab{position:absolute;left:24px;top:-4px;width:60px;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;color:#fff}
+
+/* ---- notas + teclado ---- */
+#notes{background:#fff;color:#000}
+#notes .sb{color:#000}
+.nhead{position:absolute;top:62px;left:20px;right:22px;display:flex;justify-content:space-between;color:#d9a300;font-size:19px;font-weight:600}
+.ndate{position:absolute;top:196px;width:100%;text-align:center;color:#8e8e93;font-size:14px}
+.ntitle{position:absolute;top:236px;left:28px;font-size:30px;font-weight:800;color:#000}
+#ntext{position:absolute;top:366px;left:28px;right:26px;font-size:29px;line-height:38px;color:#1c1c1e;white-space:pre-wrap;word-wrap:break-word;font-family:Inter,"Noto Color Emoji",sans-serif}
+.cur{display:inline-block;width:3px;height:34px;margin:0 -1px 0 1px;vertical-align:-7px;border-radius:1.5px;background:#e5a50a}
+#kb{position:absolute;left:0;top:628px;width:438px;height:300px}
+#kbbg{position:absolute;inset:0;background:#d2d5db}
+.kset{position:absolute;left:0;top:0;width:438px;height:256px}
+.key{position:absolute;height:50px;border-radius:8px;background:#fff;box-shadow:0 1.3px 0 rgba(0,0,0,.32);
+  display:flex;align-items:center;justify-content:center;font-size:23px;color:#000}
+.key.sp{background:#abb1bc;font-size:16px}
+.key .ki{width:25px;height:25px;color:#111}
+.key.sk{font-size:16px}
+.emo{position:absolute;width:54.75px;height:48px;display:flex;align-items:center;justify-content:center;font-size:32px;border-radius:10px}
+.elab{position:absolute;left:14px;top:9px;font-size:11px;font-weight:700;color:#6d717a;letter-spacing:.5px}
+.ebar{position:absolute;left:0;top:226px;width:438px;height:28px;display:flex;align-items:center;gap:15px;padding-left:66px;font-size:15px;filter:grayscale(1);opacity:.55}
+#kabcE{position:absolute;left:10px;top:226px;width:46px;height:28px;font-size:15px;font-weight:600;color:#333;display:flex;align-items:center;justify-content:center;border-radius:6px}
+#kblank{position:absolute;left:0;top:0;width:438px;height:252px;background:#d2d5db;opacity:0}
+.kbi{position:absolute;top:254px;width:27px;height:27px;color:#4d525a}
+.kbhome{position:absolute;top:288px;left:152px;width:134px;height:5px;border-radius:3px;background:#000}
+#kpop{position:absolute;display:none;background:#fff;border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.32);text-align:center;font-size:38px;line-height:52px;color:#000}
+#kacc{position:absolute;display:none;height:54px;background:#fff;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.3);padding:6px;gap:0}
+#kacc span{display:inline-block;width:40px;height:42px;line-height:42px;text-align:center;font-size:26px;color:#000;border-radius:8px;vertical-align:top}
+#kacc span.sel{background:#0a84ff;color:#fff}
+
+/* ---- capas de efectos ---- */
+#dim{background:#000;opacity:0}
+#carousel{opacity:0}
+.ctitle{position:absolute;top:150px;width:100%;text-align:center;font-size:24px;font-weight:700}
+.chint{position:absolute;top:186px;width:100%;text-align:center;font-size:15px;color:rgba(255,255,255,.65)}
+#ctrack{position:absolute;left:0;top:300px;width:438px;height:330px}
+.citem{position:absolute;top:0;left:129px;width:180px;text-align:center}
+.citem .cc{width:180px;height:180px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12)}
+.citem .cc div{width:84px;height:84px}
+.citem .cn{margin-top:22px;font-size:26px;font-weight:700;white-space:nowrap}
+#cdots{position:absolute;top:640px;width:100%;display:flex;justify-content:center;gap:9px}
+#cdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.35)}
+#wallet{opacity:0}
+.wtitle{position:absolute;top:120px;width:100%;text-align:center;font-size:22px;font-weight:700}
+.card{position:absolute;left:39px;top:300px;width:360px;height:226px;border-radius:20px;padding:22px;
+  background:linear-gradient(135deg,#1e3a8a,#3b82f6 60%,#60a5fa);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.card .chip{width:46px;height:34px;border-radius:7px;background:linear-gradient(135deg,#f6d27a,#c89b3c)}
+.card .cnm{position:absolute;left:22px;bottom:50px;font-size:20px;font-weight:700}
+.card .cnu{position:absolute;left:22px;bottom:20px;font-size:17px;letter-spacing:2px;color:rgba(255,255,255,.85)}
+.card .ctl{position:absolute;right:22px;top:20px;width:30px;height:30px;color:#fff}
+.wface{position:absolute;top:580px;width:100%;text-align:center;font-size:20px;font-weight:600;color:rgba(255,255,255,.9)}
+.wface div{width:56px;height:56px;margin:0 auto 14px;color:#fff}
+#power{opacity:0}
+.psl{position:absolute;left:29px;width:380px;height:76px;border-radius:38px;background:rgba(255,255,255,.2)}
+.pkn{position:absolute;left:4px;top:4px;width:68px;height:68px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}
+.pkn div{width:32px;height:32px;color:#ff3b30}
+.ptx{position:absolute;left:84px;right:10px;top:0;line-height:76px;text-align:center;font-size:21px;font-weight:500}
+.pkn.sos{background:#ff3b30;color:#fff;font-weight:800;font-size:18px}
+.pcan{position:absolute;top:760px;width:100%;text-align:center;font-size:17px}
+.pcan div{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);margin:0 auto 10px;padding:18px;color:#fff}
+#volhud{position:absolute;left:12px;top:226px;width:46px;height:200px;border-radius:23px;background:rgba(40,40,48,.6);overflow:hidden;opacity:0;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+#volfill{position:absolute;left:0;bottom:0;width:46px;background:#fff}
+#volic{position:absolute;left:11px;bottom:12px;width:24px;height:24px;color:#333}
+#siri{opacity:0}
+.sg{position:absolute;inset:0;border-radius:70px;padding:9px;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.sg2{padding:30px;filter:blur(20px)}
+.sg1{padding:7px;filter:blur(5px)}
+#off{background:#000;opacity:0}
+#boot{background:#000;opacity:0}
+#spin{position:absolute;left:189px;top:410px;width:60px;height:60px}
+#spin i{position:absolute;left:27px;top:0;width:6px;height:18px;border-radius:3px;background:#fff;transform-origin:3px 30px}
+.btxt{position:absolute;top:500px;width:100%;text-align:center;font-size:18px;color:rgba(255,255,255,.75)}
+#flash{background:#fff;opacity:0}
+#thumb{position:absolute;left:0;top:0;width:438px;height:928px;transform-origin:0 0;border-radius:70px;overflow:hidden;opacity:0;box-shadow:0 0 0 14px #fff,0 10px 40px rgba(0,0,0,.5)}
+#touch{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;opacity:0;z-index:5;
+  background:rgba(50,54,72,.5);border:3px solid rgba(255,255,255,.95);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+#island{position:absolute;top:16px;height:36px;border-radius:20px;background:#000;overflow:hidden}
+#iscont{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:12px;opacity:0;white-space:nowrap}
+#iscont div{width:26px;height:26px;color:#ff453a}
+#iscont span{font-size:18px;font-weight:600}
+
+/* ---- capas de página ---- */
+#map{position:absolute;inset:0;pointer-events:none}
+.mlab{position:absolute;font-size:33px;font-weight:700;line-height:1.15;white-space:pre-line;opacity:0}
+#tip{position:absolute;left:70px;right:70px;top:1560px;display:flex;justify-content:center;opacity:0}
+.tipc{display:flex;gap:18px;align-items:flex-start;padding:24px 32px;border-radius:30px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.13);font-size:32px;line-height:1.35;font-weight:500;color:#e6e8f5;max-width:940px}
+.tipc .ti{flex:none;width:40px;height:40px;margin-top:2px}
+.tr{display:flex;align-items:center;gap:16px;font-size:31px;color:rgba(230,232,245,.5);margin:6px 0}
+.tr .tn{flex:none;width:44px;height:44px;border-radius:50%;border:2.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px}
+.tr.on{color:#fff}
+.tr.done{color:rgba(230,232,245,.75)}
+.tr .tn svg{width:24px;height:24px}
+.chips{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:920px}
+.chip2{display:flex;align-items:center;gap:10px;padding:12px 22px;border-radius:999px;font-size:30px;font-weight:600;border:2px solid}
+.chip2 svg{width:26px;height:26px}
+#prog{position:absolute;left:100px;top:1862px;width:880px;height:8px;display:flex;gap:8px}
+#prog div{position:relative;height:8px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+#prog div i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+#fadeov{position:absolute;inset:0;background:#070914;opacity:0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="blob" id="b1"></div><div class="blob" id="b2"></div><div class="blob" id="b3"></div>
+  <div id="header"><div id="pill"></div><div id="title"></div><div id="sub"></div></div>
+
+  <div id="vp"><div id="pw">
+    <div class="hw" id="hw-action"><div class="g"></div></div>
+    <div class="hw" id="hw-volup"><div class="g"></div></div>
+    <div class="hw" id="hw-voldn"><div class="g"></div></div>
+    <div class="hw" id="hw-side"><div class="g"></div></div>
+    <div class="hw" id="hw-cam"><div class="g"></div></div>
+    <div id="phone"><div id="bezel"></div>
+      <div id="screen">
+        <div class="layer" id="wall"></div>
+        <div class="layer" id="lock"></div>
+        <div class="layer" id="home"></div>
+        <div class="layer" id="cam">
+          <div id="vf"><svg id="scene" viewBox="0 0 438 590">
+            <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5aa9ff"/><stop offset=".7" stop-color="#ffd2a1"/></linearGradient></defs>
+            <rect width="438" height="590" fill="url(#sky)"/>
+            <circle cx="320" cy="190" r="42" fill="#fff4c2"/>
+            <g fill="#fff" opacity=".9"><ellipse cx="110" cy="140" rx="44" ry="14"/><ellipse cx="140" cy="128" rx="30" ry="17"/><ellipse cx="300" cy="90" rx="30" ry="9"/></g>
+            <path d="M0 360 L90 250 L170 330 L260 215 L360 320 L438 270 L438 590 L0 590Z" fill="#7b8fd6"/>
+            <path d="M0 420 L120 322 L210 402 L300 332 L438 432 L438 590 L0 590Z" fill="#4a5ba8"/>
+            <path d="M0 470 Q219 428 438 470 L438 590 L0 590Z" fill="#2f7d5b"/>
+            <g transform="translate(232 440)"><rect x="-15" y="-6" width="30" height="20" fill="#fff6e8"/><path d="M-19 -6 L0 -21 L19 -6Z" fill="#e4572e"/><rect x="-4" y="4" width="8" height="10" fill="#7a4a2e"/><rect x="6" y="-1" width="6" height="6" fill="#7cc6ff"/></g>
+            <g transform="translate(100 470)"><rect x="-5" y="0" width="10" height="38" fill="#5b3a29"/><circle cx="0" cy="-14" r="26" fill="#2c6e49"/><circle cx="-15" cy="-1" r="18" fill="#2c6e49"/><circle cx="15" cy="-1" r="18" fill="#2c6e49"/></g>
+            <g transform="translate(350 485)"><rect x="-4" y="0" width="8" height="28" fill="#5b3a29"/><circle cx="0" cy="-10" r="20" fill="#357a52"/></g>
+          </svg></div>
+          <div class="cicon" style="left:26px" data-icon="bolt"></div>
+          <div class="cicon" style="right:26px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0">LIVE</div>
+          <div id="rec">00:00:00</div>
+          <div id="zpills"><div class="zp">.5</div><div class="zp on" id="zon">1×</div><div class="zp">2</div><div class="zp">5</div></div>
+          <div id="modes"><span>VIDEO</span><span class="on">FOTO</span><span>RETRATO</span></div>
+          <div id="camthumb"><div id="ctimg"></div></div>
+          <div id="shutter"><div id="shutIn"></div></div>
+          <div id="flipbtn" data-icon="flip"></div>
+          <div id="zui"><div id="zlab">ZOOM</div><div id="zbox"><div id="zstrip"></div><div id="zmark"></div></div><div id="zval">1.0×</div></div>
+          <div class="homebar"></div>
+        </div>
+        <div class="layer" id="notes">
+          <div class="nhead"><span>‹ Notas</span><span>Listo</span></div>
+          <div class="ndate">2 de noviembre de 2026, 9:41</div>
+          <div class="ntitle">Mensajes</div>
+          <div id="ntext"></div>
+          <div id="kb">
+            <div id="kbbg"></div>
+            <div class="kset" id="kabc"></div>
+            <div class="kset" id="knum"></div>
+            <div class="kset" id="kemoji"></div>
+            <div id="kblank"></div>
+            <div class="kbi" style="left:24px" data-icon="globe"></div>
+            <div class="kbi" style="left:388px" data-icon="mic"></div>
+            <div class="kbhome"></div>
+            <div id="kpop"></div>
+            <div id="kacc"></div>
+          </div>
+        </div>
+        <div class="layer" id="dim"></div>
+        <div class="layer" id="carousel">
+          <div class="ctitle">Botón de Acción</div>
+          <div class="chint">Desliza para elegir</div>
+          <div id="ctrack"></div>
+          <div id="cdots"></div>
+        </div>
+        <div class="layer" id="wallet">
+          <div class="wtitle">Wallet</div>
+          <div class="card"><div class="chip"></div><div class="ctl" data-icon="nfc"></div><div class="cnm">Mi tarjeta</div><div class="cnu">•••• 4821</div></div>
+          <div class="wface"><div data-icon="nfc"></div>Acerca el iPhone al lector</div>
+        </div>
+        <div class="layer" id="power">
+          <div class="psl" style="top:110px"><div class="pkn" id="pknob"><div data-icon="power"></div></div><div class="ptx" id="ptx">deslizar para apagar</div></div>
+          <div class="psl" style="top:540px"><div class="pkn sos">SOS</div><div class="ptx">Emergencia SOS</div></div>
+          <div class="pcan"><div data-icon="x"></div>Cancelar</div>
+        </div>
+        <div id="volhud"><div id="volfill"></div><div id="volic" data-icon="speaker"></div></div>
+        <div class="layer" id="siri"><div class="sg sg2"></div><div class="sg sg1"></div></div>
+        <div class="layer" id="off"></div>
+        <div class="layer" id="boot"><div id="spin"></div><div class="btxt">Reiniciando…</div></div>
+        <div class="layer" id="flash"></div>
+        <div id="thumb"></div>
+        <div id="touch"></div>
+        <div id="island"><div id="iscont"><div data-icon="bellOff"></div><span>Modo silencio</span></div></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div id="map"><svg id="mapsvg" width="1080" height="1920" style="position:absolute;left:0;top:0"></svg></div>
+  <div id="tip"></div>
+  <div id="prog"></div>
+  <div id="fadeov"></div>
+</div>
+
+<script>
+// ================= utilidades =================
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const eio=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const eout=p=>1-Math.pow(1-p,3);
+const eback=p=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)};
+const win=(t,a,b,f=.3)=>Math.min(prog(t,a,a+f),1-prog(t,b-f,b));
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`};
+const flashAt=(lt,a)=>lt<a?0:.9*Math.min(prog(lt,a,a+.03),1-prog(lt,a+.06,a+.38));
+
+// ================= íconos (trazos estilo Lucide) =================
+const ic=(d,sw=2,fill='none')=>`<svg viewBox="0 0 24 24" width="100%" height="100%" fill="${fill}" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON={
+ bellOff:ic('<path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18.6 13A17.9 17.9 0 0 1 18 8"/><path d="M6.3 6.3A5.9 5.9 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="m2 2 20 20"/>',2.4),
+ power:ic('<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>',2.6),
+ flash:ic('<path d="M18 6c0 2-2 2-2 4v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V10c0-2-2-2-2-4V2h12z"/><line x1="6" x2="18" y1="6" y2="6"/><line x1="12" x2="12" y1="12" y2="12"/>'),
+ camera:ic('<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>'),
+ mic:ic('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',1.8),
+ globe:ic('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',1.6),
+ smile:ic('<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>',1.7),
+ del:ic('<path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><path d="m12 9 6 6"/><path d="m18 9-6 6"/>',1.7),
+ bolt:ic('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>'),
+ speaker:ic('<path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5z"/><path d="M16 9a5 5 0 0 1 0 6"/>',2.2),
+ bulb:ic('<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>'),
+ check:ic('<path d="M20 6 9 17l-5-5"/>',3),
+ x:ic('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',2.4),
+ flip:ic('<path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><circle cx="12" cy="12" r="3"/><path d="m18 22-3-3 3-3"/><path d="m6 2 3 3-3 3"/>'),
+ translate:ic('<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>'),
+ nfc:ic('<path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>'),
+};
+const SHIFT={
+ off:'<svg viewBox="0 0 24 26" width="100%" height="100%"><path d="M12 2.6 2.8 12.3H8.1V19.6H15.9V12.3H21.2Z" fill="none" stroke="#111" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+ on:'<svg viewBox="0 0 24 26" width="100%" height="100%"><path d="M12 2.6 2.8 12.3H8.1V19.6H15.9V12.3H21.2Z" fill="#111" stroke="#111" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+ caps:'<svg viewBox="0 0 24 26" width="100%" height="100%"><path d="M12 2.6 2.8 12.3H8.1V18.4H15.9V12.3H21.2Z" fill="#111" stroke="#111" stroke-width="1.7" stroke-linejoin="round"/><rect x="7.6" y="21.4" width="8.8" height="2.4" rx=".8" fill="#111"/></svg>',
+};
+const STATUS=(time=true)=>`<div class="sb">${time?'<span class="sbt">9:41</span>':''}<span class="sbr">
+<svg width="19" height="12" viewBox="0 0 19 12" fill="currentColor"><rect x="0" y="8" width="3.4" height="4" rx="1"/><rect x="5.1" y="5.5" width="3.4" height="6.5" rx="1"/><rect x="10.2" y="3" width="3.4" height="9" rx="1"/><rect x="15.3" y="0" width="3.4" height="12" rx="1"/></svg>
+<svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 4.3a10 10 0 0 1 14 0"/><path d="M4.4 7.2a5.8 5.8 0 0 1 8.2 0"/><circle cx="8.5" cy="10.3" r=".9" fill="currentColor"/></svg>
+<svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.6" fill="none" stroke="currentColor" stroke-opacity=".45"/><rect x="2.2" y="2.2" width="17" height="8.6" rx="2" fill="currentColor"/><path d="M25 4.6v3.8a2 2 0 0 0 0-3.8Z" fill="currentColor" fill-opacity=".45"/></svg></span></div>`;
+
+// ================= construcción de la pantalla =================
+document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=ICON[el.dataset.icon]);
+
+$('lock').innerHTML = STATUS(false)+`
+  <div class="ldate">lunes, 2 de noviembre</div>
+  <div class="ltime">9:41</div>
+  <div class="notif"><div class="ni">💬</div><div><b>Mensajes</b><span>¡Buenos días! ☀️</span></div><i>ahora</i></div>
+  <div class="lbtn" style="left:46px"><div>${ICON.flash}</div></div>
+  <div class="lbtn" style="right:46px"><div>${ICON.camera}</div></div>
+  <div class="homebar"></div>`;
+
+const APPS=[
+ ['Fotos','🌼','#ffffff','#f1f1f1'],['Cámara','📷','#8e8e93','#5a5a5f'],['Clima','⛅','#4fa3ff','#1a6fe0'],['Reloj','⏰','#2c2c2e','#000'],
+ ['Mapas','🗺️','#7ee08f','#3fb6ff'],['Notas','📝','#fff7c2','#ffd93d'],['Música','🎵','#ff5e7a','#e2264d'],['Calendario','📅','#ffffff','#eeeeee'],
+ ['Correo','✉️','#5ac8fa','#1a7cf5'],['Salud','❤️','#ffffff','#f0f0f0'],['Libros','📚','#ffb340','#ff8a00'],['Podcasts','🎙️','#c86bff','#8a2be2'],
+ ['Juegos','🎮','#5e5ce6','#3634a3'],['Tienda','🛍️','#36d1ff','#007aff'],['Ajustes','⚙️','#b0b0b8','#6e6e76'],['Cartera','💳','#2c2c2e','#000'],
+];
+const DOCK=[['','📞','#5df07c','#21c045'],['','💬','#5df07c','#21c045'],['','🧭','#7cc8ff','#1a7cf5'],['','🎧','#ff7a8a','#ff2d55']];
+let homeHTML=STATUS(true);
+APPS.forEach((a,i)=>{const x=28.4+(i%4)*102.4, y=74+Math.floor(i/4)*112;
+  homeHTML+=`<div class="app" style="left:${x}px;top:${y}px"><div class="ai" style="background:linear-gradient(${a[2]},${a[3]})">${a[1]}</div><div class="an">${a[0]}</div></div>`;});
+homeHTML+=`<div class="search">🔍 Buscar</div><div class="dock"></div>`;
+DOCK.forEach((a,i)=>{const x=28.4+i*102.4;
+  homeHTML+=`<div class="app" style="left:${x}px;top:${928-18-104+15}px"><div class="ai" style="background:linear-gradient(${a[2]},${a[3]})">${a[1]}</div></div>`;});
+homeHTML+='<div class="homebar"></div>';
+$('home').innerHTML=homeHTML;
+// miniatura de la captura de pantalla = copia del fondo + inicio
+$('thumb').innerHTML=`<div class="layer" style="background:${getComputedStyle($('wall')).backgroundImage}"></div><div class="layer">${homeHTML}</div>`;
+
+// carrusel del Botón de Acción
+const CAR=[['Silencio','bellOff','#ff453a'],['Linterna','flash','#ffd60a'],['Cámara','camera','#e5e5ea'],['Nota de voz','mic','#ff375f'],['Traducir','translate','#64d2ff'],['Atajo','bolt','#bf5af2']];
+$('ctrack').innerHTML=CAR.map(c=>`<div class="citem"><div class="cc"><div style="color:${c[2]}">${ICON[c[1]]}</div></div><div class="cn">${c[0]}</div></div>`).join('');
+$('cdots').innerHTML=CAR.map(()=>'<i></i>').join('');
+// ruedita de reinicio
+$('spin').innerHTML=[...Array(8)].map((_,i)=>`<i style="transform:rotate(${i*45}deg)"></i>`).join('');
+
+// ================= teclado =================
+const EMOJIS=['😂','❤️','😍','🥰','😊','🙏','😭','😘','👍','😄','🔥','✨','🥺','😅','💕','🎉','😎','🤗','🌞','🌹','😴','🤔','👏','💪','🙌','😇','🍕','🎶','☕','🌙','⭐','💯'];
+const LAYOUT={abc:[],num:[],emoji:[]};
+(()=>{
+  const row=(arr,y,x0,w,step,set,pre='')=>arr.forEach((c,i)=>LAYOUT[set].push({id:pre?pre+i:c,label:c,x:x0+i*step,y,w,t:'l'}));
+  row('qwertyuiop'.split(''),10,5.8,37.6,43.2,'abc');
+  row('asdfghjklñ'.split(''),72,5.8,37.6,43.2,'abc');
+  LAYOUT.abc.push({id:'shift',x:5.8,y:134,w:52,t:'s',icon:'shift'});
+  row('zxcvbnm'.split(''),134,70.6,37.6,43.2,'abc');
+  row('1234567890'.split(''),10,5.8,37.6,43.2,'num');
+  row(['-','/',':',';','(',')','€','&','@','"'],72,5.8,37.6,43.2,'num','n2_');
+  LAYOUT.num.push({id:'sym',label:'#+=',x:5.8,y:134,w:52,t:'s'});
+  row(['.',',','?','!',"'"],134,76.3,52.6,58.2,'num','n3_');
+  for(const s of ['abc','num']){
+    LAYOUT[s].push({id:'del',x:380.2,y:134,w:52,t:'s',icon:'del'});
+    LAYOUT[s].push({id:s==='abc'?'123':'abc',label:s==='abc'?'123':'ABC',x:5.8,y:196,w:46,t:'s'});
+    LAYOUT[s].push({id:'emoji',x:57.4,y:196,w:46,t:'s',icon:'smile'});
+    LAYOUT[s].push({id:'space',label:'espacio',x:109,y:196,w:214,t:'w'});
+    LAYOUT[s].push({id:'ret',label:'intro',x:328.6,y:196,w:103.6,t:'s'});
+  }
+  EMOJIS.forEach((e,i)=>LAYOUT.emoji.push({id:'e'+i,label:e,x:(i%8)*54.75,y:30+Math.floor(i/8)*48,w:54.75,h:48,t:'e'}));
+  LAYOUT.emoji.push({id:'abc',x:10,y:226,w:46,h:28,t:'x'});
+})();
+const KEYEL={abc:{},num:{},emoji:{}};
+for(const s of ['abc','num']){
+  const box=$(s==='abc'?'kabc':'knum');
+  for(const k of LAYOUT[s]){
+    const el=document.createElement('div');
+    el.className='key'+(k.t==='s'?' sp':'')+(k.label&&k.label.length>1?' sk':'');
+    el.style.cssText=`left:${k.x}px;top:${k.y}px;width:${k.w}px`;
+    if(k.icon==='shift') el.innerHTML='<div class="ki" id="shiftic"></div>';
+    else if(k.icon) el.innerHTML=`<div class="ki">${ICON[k.icon]}</div>`;
+    else el.textContent=k.label;
+    box.appendChild(el); KEYEL[s][k.id]=el;
+  }
+}
+(()=>{const box=$('kemoji');
+  box.innerHTML='<div class="elab">USADOS CON FRECUENCIA</div><div class="ebar"><span>🕘</span><span>😀</span><span>🐻</span><span>🍔</span><span>⚽</span><span>🚗</span><span>💡</span><span>🔣</span><span>🏳️</span></div><div id="kabcE">ABC</div>';
+  for(const k of LAYOUT.emoji){ if(k.t!=='e'){KEYEL.emoji[k.id]=$('kabcE');continue;}
+    const el=document.createElement('div'); el.className='emo'; el.style.cssText=`left:${k.x}px;top:${k.y}px`; el.textContent=k.label; box.appendChild(el); KEYEL.emoji[k.id]=el; }
+})();
+const keyRect=(layout,id)=>{const k=LAYOUT[layout].find(k=>k.id===id); return k?{x:k.x,y:k.y,w:k.w,h:k.h||50,t:k.t,label:k.label}:null};
+
+function kbSim(init,taps,lt){
+  const st={ch:Array.from(init.text),cur:null,layout:init.layout||'abc',shift:init.shift||0,lastShift:-9,lastSpace:-9,lastInput:-9};
+  const evs=taps.map(t=>({...t,eff:t.at+(t.hold||0)+.08})).sort((a,b)=>a.eff-b.eff);
+  for(const e of evs){ if(e.eff>lt) break; applyTap(st,e); if(e.k!=='nop') st.lastInput=e.eff; }
+  return st;
+}
+function applyTap(st,e){
+  const c=st.cur==null?st.ch.length:st.cur;
+  const ins=s=>{const a=Array.from(s); st.ch.splice(c,0,...a); if(st.cur!=null) st.cur=c+a.length;};
+  switch(e.k){
+    case 'shift': if(e.at-st.lastShift<.4&&st.shift===1) st.shift=2; else st.shift=st.shift?0:1; st.lastShift=e.at; return;
+    case 'space':{
+      if(e.at-st.lastSpace<.45&&st.ch[c-1]===' '&&/[\p{L}\p{N}]/u.test(st.ch[c-2]||'')){ st.ch.splice(c-1,1,'.',' '); if(st.cur!=null) st.cur=c+1; st.shift=1; }
+      else ins(' ');
+      st.lastSpace=e.at; return; }
+    case 'del': if(c>0){st.ch.splice(c-1,1); if(st.cur!=null) st.cur=c-1;} if(!st.ch.length) st.shift=1; return;
+    case 'delword':{ let i=c; while(i>0&&st.ch[i-1]===' ') i--; while(i>0&&st.ch[i-1]!==' ') i--; st.ch.splice(i,c-i); if(st.cur!=null) st.cur=i; if(!st.ch.length) st.shift=1; return; }
+    case '123': st.layout='num'; return;
+    case 'abc': st.layout='abc'; return;
+    case 'emoji': st.layout='emoji'; return;
+    case 'cur': st.cur=e.set; return;
+    case 'nop': return;
+  }
+  if(e.ins){ ins(e.ins); if(st.shift===1) st.shift=0; return; }
+  if(/^e\d+$/.test(e.k)){ ins(EMOJIS[+e.k.slice(1)]); return; }
+  let ch=e.k; if(st.layout==='abc'&&st.shift) ch=ch.toUpperCase(); ins(ch); if(st.shift===1) st.shift=0;
+}
+const T=(k,at,o={})=>({k,at,...o});
+
+// ================= capítulos y pasos =================
+const CH={
+ intro:{acc:'#8ab4ff',pill:'Guía rápida'},
+ map:{acc:'#8ab4ff',pill:'Conoce tus botones'},
+ side:{acc:'#4f8cff',pill:'Botón lateral'},
+ vol:{acc:'#30d158',pill:'Botones de volumen'},
+ action:{acc:'#ff9f0a',pill:'Botón de Acción'},
+ cam:{acc:'#bf5af2',pill:'Control de la cámara'},
+ combo:{acc:'#ff375f',pill:'Combinaciones'},
+ kbd:{acc:'#40c8e0',pill:'El teclado'},
+ outro:{acc:'#8ab4ff',pill:'Resumen'},
+};
+const PROG_CH=['map','side','vol','action','cam','combo','kbd'];
+
+function base(S,from,to,p){
+  for(const k of ['lock','home','cam','notes']) S.L[k]=0;
+  if(from&&from!==to) S.L[from]=1-p;
+  S.L[to]=Math.max(S.L[to]||0,from&&from!==to?p:1);
+}
+function zoomPhone(S,z){ S.phone.x=lerp(305,46.5,z); S.phone.y=lerp(70,-698.6,z); S.phone.s=lerp(1,2.1,z); }
+function kbDraw(S,lt,step){
+  const taps=step.taps||[];
+  const st=kbSim(step.kb,taps,lt);
+  const kb=S.kb={text:st.ch.join(''),cur:st.cur,layout:st.layout,shift:st.shift,pressed:null,pop:null,acc:null,tp:0,since:lt-st.lastInput,textOp:1};
+  let best=null,bd=9;
+  for(const t of taps){
+    if(t.vis===false) continue;
+    const end=t.at+Math.max(.13,t.hold||0);
+    const lay=kbSim(step.kb,taps,t.at-.001).layout;
+    if(lt>=t.at-.02&&lt<=end&&lay===st.layout){ kb.pressed=t.k; if(!t.hold&&keyRect(lay,t.k)?.t==='l') kb.pop=t.k; }
+    if(lt>=t.at-.14&&lt<=end+.14){const d=Math.abs(lt-t.at); if(d<bd){bd=d;best={t,lay,end};}}
+  }
+  if(best){const r=keyRect(best.lay,best.t.k); if(r) S.touch={op:win(lt,best.t.at-.14,best.end+.14,.08),x:r.x+r.w/2,y:628+r.y+r.h/2,ring:prog(lt,best.t.at,best.t.at+.35)};}
+  if(step.holdKey){const [k,a,b]=step.holdKey; if(lt>=a&&lt<=b){kb.pressed=k; const r=keyRect(st.layout,k); S.touch={op:win(lt,a-.1,b+.12,.1),x:r.x+r.w/2,y:628+r.y+25,ring:prog(lt,a,a+.35)};}}
+  return kb;
+}
+
+const STEPS=[
+{ch:'intro',dur:4.2,title:'Las teclas\ndel iPhone',sub:'Botones y teclado, paso a paso',big:true,sfx:[[.15,'chime']],
+ draw(S,lt){ base(S,null,'lock',1); const p=eout(prog(lt,.2,1.5)); S.phone.y=70+420*(1-p); S.phone.op=prog(lt,.2,.9); S.off=1-prog(lt,1.3,1.9); }},
+{ch:'map',dur:7.4,title:'Sus botones',sub:'Cada uno hace varias cosas',
+ tip:'El Botón de Acción y el Control de la cámara solo están en modelos recientes.',
+ draw(S,lt){ base(S,null,'lock',1); const B=['action','volup','voldn','side','cam'];
+   [.7,1.5,2.3,3.1,3.9].forEach((a,i)=>{S.labels[i]=eout(prog(lt,a,a+.5)); S.hl[B[i]]=win(lt,a,a+1.1,.2);});
+   S.labelsOp=1-prog(lt,7.0,7.4); }},
+{ch:'side',dur:4.6,title:'1 toque',sub:'Bloquea o enciende la pantalla',
+ presses:[['side',1.1,.14],['side',2.9,.14]],
+ draw(S,lt){ base(S,null,'lock',1); S.off=prog(lt,1.12,1.3)*(1-prog(lt,2.92,3.2)); }},
+{ch:'side',dur:4.8,title:'Mantén presionado',sub:'Activa Siri',tip:'Con botón de inicio: mantén presionado ese botón.',
+ presses:[['side',1.0,1.6]],
+ draw(S,lt){ base(S,null,'lock',1); S.siri=prog(lt,1.45,1.9)*(1-prog(lt,4.1,4.6)); }},
+{ch:'side',dur:4.8,title:'2 toques rápidos',sub:'Abre Wallet para pagar\ncon Apple Pay',tip:'Con botón de inicio: tócalo 2 veces rápido.',
+ presses:[['side',1.0,.1],['side',1.28,.1]],
+ draw(S,lt){ base(S,null,'lock',1); const w=eout(prog(lt,1.45,2.0))*(1-prog(lt,4.1,4.6)); S.wallet=w; S.dim=w*.9; }},
+{ch:'vol',dur:5.2,title:'Subir y bajar',sub:'Ajusta el volumen',tip:'Funciona en música, videos y llamadas.',
+ presses:[['volup',.9,.12],['volup',1.3,.12],['volup',1.7,.12],['voldn',2.6,.12],['voldn',3.0,.12]],
+ draw(S,lt){ base(S,'lock','home',prog(lt,0,.45)); let l=.35;
+   for(const a of [.9,1.3,1.7]) l+=.13*eout(prog(lt,a,a+.15)); for(const a of [2.6,3.0]) l-=.13*eout(prog(lt,a,a+.15));
+   S.vol.lvl=l; S.vol.op=win(lt,.8,4.5,.25); }},
+{ch:'vol',dur:4.8,title:'Con la cámara',sub:'Cualquiera de los dos\ntoma la foto',tip:'Mantenlo presionado para grabar un video rápido.',
+ presses:[['volup',1.3,.14],['voldn',2.8,.14]],sfx:[[1.3,'shutter'],[2.8,'shutter']],
+ draw(S,lt){ base(S,'home','cam',prog(lt,0,.45)); S.flash=flashAt(lt,1.3)+flashAt(lt,2.8); S.camThumb=lt>1.45?1:0; }},
+{ch:'action',dur:4.8,title:'Mantén presionado',sub:'Activa o quita el modo silencio',tip:'En modelos anteriores hay un interruptor de silencio.',
+ presses:[['action',1.0,.75]],sfx:[[1.6,'tick']],
+ draw(S,lt){ base(S,'cam','lock',prog(lt,0,.45)); S.island.e=eback(prog(lt,1.55,2.0))*(1-eio(prog(lt,3.7,4.1))); }},
+{ch:'action',dur:5.8,title:'Personalízalo',sub:'En Ajustes eliges qué hace:\nlinterna, cámara y más',tip:'Disponible desde el iPhone 15 Pro.',
+ sfx:[[.9,'tick'],[1.7,'tick'],[2.5,'tick'],[3.3,'tick'],[4.1,'tick']],
+ draw(S,lt){ base(S,null,'lock',1); const o=win(lt,.25,5.5,.35); S.car.op=o; S.dim=o*.92;
+   let pos=0; for(let k=0;k<5;k++) pos+=eio(prog(lt,.9+k*.8,.9+k*.8+.35)); S.car.pos=pos; }},
+{ch:'cam',dur:4.4,title:'Presiónalo',sub:'Abre la cámara al instante',tip:'En iPhone 16 y posteriores (no en todos).',
+ presses:[['cam',1.0,.14]],
+ draw(S,lt){ base(S,null,'lock',1); const p=eout(prog(lt,1.05,1.45)); S.L.cam=p; S.L.lock=1-prog(lt,1.05,1.35); S.camIn=lerp(.88,1,p); }},
+{ch:'cam',dur:5.0,title:'Presiona otra vez',sub:'Toma la foto · Mantén presionado\npara grabar video',
+ presses:[['cam',.9,.14],['cam',2.3,1.6]],sfx:[[.9,'shutter'],[2.55,'beep']],
+ draw(S,lt){ base(S,null,'cam',1); S.flash=flashAt(lt,.9); S.camThumb=lt>1.05?1:0; S.rec=win(lt,2.55,3.95,.12); S.recT=Math.max(0,lt-2.55); }},
+{ch:'cam',dur:5.2,title:'Desliza el dedo',sub:'Con un toque suave, desliza\npara hacer zoom',tip:'También cambia exposición, estilos y más.',
+ presses:[['cam',.8,3.4,'light']],
+ draw(S,lt){ base(S,null,'cam',1); const z=eio(prog(lt,1.3,3.4)); S.zoom=lerp(1,5,z); S.zui=win(lt,1.0,4.6,.25); S.slide=lerp(24,-24,z); S.camThumb=1; }},
+{ch:'combo',dur:4.8,title:'Captura de pantalla',sub:'Presiona a la vez el lateral\ny subir volumen',tip:'Con botón de inicio: lateral + botón de inicio.',
+ presses:[['side',1.2,.2],['volup',1.2,.2]],sfx:[[1.25,'shutter']],
+ draw(S,lt){ base(S,'cam','home',prog(lt,0,.45)); S.flash=flashAt(lt,1.25); S.thumb.op=prog(lt,1.32,1.42)*(1-prog(lt,4.2,4.6)); S.thumb.p=eio(prog(lt,1.45,2.05)); }},
+{ch:'combo',dur:5.6,title:'Apagar',sub:'Mantén el lateral + un volumen\ny desliza',tip:'Ojo: si no sueltas, se activa Emergencia SOS.',
+ presses:[['side',.9,1.4],['voldn',.9,1.4]],sfx:[[3.6,'tick']],
+ draw(S,lt){ base(S,null,'home',1); S.power.op=prog(lt,1.55,1.85)*(1-prog(lt,4.7,4.9)); S.dim=S.power.op*.88;
+   const k=eio(prog(lt,2.8,3.6)); S.power.knob=k;
+   if(lt>2.5&&lt<3.9) S.touch={op:win(lt,2.55,3.85,.15),x:29+4+34+k*304,y:110+38,ring:0};
+   S.off=prog(lt,3.75,4.2); }},
+{ch:'combo',dur:8.2,title:'Forzar reinicio',sub:'Si el iPhone se congela\no no responde',
+ presses:[['volup',1.2,.14],['voldn',2.1,.14],['side',3.0,3.3]],
+ tipFn(lt){ const rows=[['Sube volumen y suelta',.8,2.0],['Baja volumen y suelta',2.0,2.85],['Mantén el lateral hasta que reinicie',2.85,6.4]];
+   return '<div class="tipc" style="display:block;padding:22px 34px">'+rows.map((r,i)=>{const s=lt>=r[2]?'done':lt>=r[1]?'on':'';
+     return `<div class="tr ${s}"><span class="tn" style="${s==='on'?`border-color:${CH.combo.acc};background:${CH.combo.acc};color:#fff`:s==='done'?'border-color:#30d158;color:#30d158':''}">${s==='done'?ICON.check:i+1}</span>${r[0]}</div>`;}).join('')+'</div>'; },
+ draw(S,lt){ S.L.wall=1; base(S,null,lt<6.8?'home':'lock',1);
+   S.off=Math.max(1-prog(lt,0,.5),prog(lt,4.0,4.25)*(1-prog(lt,6.8,7.1)));
+   S.boot.op=prog(lt,4.9,5.2)*(1-prog(lt,6.8,7.1)); S.boot.spin=lt; }},
+{ch:'kbd',dur:7.4,title:'Mayúsculas',sub:'1 toque: una mayúscula\n2 toques: TODO EN MAYÚSCULAS',kb:{text:'Feliz cumple, ',shift:0},
+ taps:[T('shift',2.0),T('a',2.4),T('n',2.62),T('a',2.84),T('space',3.15),T('shift',3.7),T('shift',3.88),T('t',4.4),T('q',4.65),T('m',4.9)],
+ draw(S,lt){ zoomPhone(S,eio(prog(lt,.35,1.45))); base(S,'lock','notes',prog(lt,0,.4)); kbDraw(S,lt,this); S.kb.textOp=1; }},
+{ch:'kbd',dur:5.2,title:'Mantén una letra',sub:'Aparecen los acentos\ny otras variantes',kb:{text:'Vamos al caf',shift:0},
+ taps:[T('e',1.0,{hold:2.0,ins:'é'})],
+ draw(S,lt){ zoomPhone(S,1); base(S,null,'notes',1); const kb=kbDraw(S,lt,this); kb.textOp=prog(lt,0,.3);
+   const op=prog(lt,1.45,1.55)*(1-prog(lt,3.0,3.04)); if(op>0) kb.acc={op,sel:lt>2.1?1:0};
+   if(lt>=1.45&&lt<3.15){ const r=keyRect('abc','e'), m=eio(prog(lt,1.9,2.1)); const ax=r.x-6+6+40+20;
+     S.touch={op:1-prog(lt,3.0,3.15),x:lerp(r.x+r.w/2,ax,m),y:lerp(628+r.y+25,628+r.y-62+27,m),ring:0}; } }},
+{ch:'kbd',dur:6.8,title:'Mantén el espacio',sub:'Se vuelve un trackpad\npara mover el cursor',kb:{text:'Vamos mañana',shift:0},
+ taps:[T('space',.9,{hold:2.6,vis:false,k:'nop'}),...[11,10,9,8,7,6,5].map((v,i)=>T('cur',1.6+i*.27,{set:v,vis:false,sfx:false})),
+   T('space',3.95),T('a',4.15),T('l',4.35),T('space',4.6),T('c',4.85),T('i',5.05),T('n',5.25),T('e',5.45)],
+ draw(S,lt){ zoomPhone(S,1); base(S,null,'notes',1); const kb=kbDraw(S,lt,this); kb.textOp=prog(lt,0,.3);
+   kb.tp=prog(lt,1.0,1.3)*(1-prog(lt,3.5,3.75));
+   if(lt>=.8&&lt<3.65){ const m=eio(prog(lt,1.5,3.5)); S.touch={op:win(lt,.8,3.65,.12),x:216-130*m,y:628+221,ring:prog(lt,.9,1.25)}; kb.pressed=lt<3.5?'space':null; kb.since=0; } }},
+{ch:'kbd',dur:4.6,title:'Doble espacio',sub:'Toca 2 veces el espacio\ny se escribe un punto',kb:{text:'Ya voy',shift:0},
+ taps:[T('space',1.2),T('space',1.42)],
+ draw(S,lt){ zoomPhone(S,1); base(S,null,'notes',1); kbDraw(S,lt,this).textOp=prog(lt,0,.3); }},
+{ch:'kbd',dur:6.4,title:'Números y emojis',sub:'Toca 123 para números\ny la carita para emojis',kb:{text:'Nos vemos a las ',shift:0},
+ taps:[T('123',1.0),T('8',1.6),T('space',2.0),T('emoji',2.7),T('e9',3.6),T('abc',4.6)],
+ draw(S,lt){ zoomPhone(S,1); base(S,null,'notes',1); kbDraw(S,lt,this).textOp=prog(lt,0,.3); }},
+{ch:'kbd',dur:5.4,title:'Borrar',sub:'Mantén presionada la tecla borrar:\nva cada vez más rápido',kb:{text:'Nos vemos a las 8 😄 jajaja',shift:0},
+ holdKey:['del',.8,3.85],
+ taps:[...[.8,1.3,1.42,1.54,1.66,1.78,1.9].map(t=>T('del',t,{vis:false})),...[2.2,2.5,2.8,3.1,3.4,3.7].map(t=>T('delword',t,{vis:false}))],
+ draw(S,lt){ zoomPhone(S,1); base(S,null,'notes',1); kbDraw(S,lt,this).textOp=prog(lt,0,.3); }},
+{ch:'outro',dur:5.8,title:'¡Listo!',sub:'Ya sabes cómo funcionan\nlas teclas de tu iPhone',sfx:[[.5,'chime']],kb:{text:'',shift:1},
+ draw(S,lt){ zoomPhone(S,1-eio(prog(lt,0,1.0))); base(S,'notes','home',prog(lt,.6,1.0)); kbDraw(S,lt,this); S.recap=lt; S.fadeAll=prog(lt,5.1,5.8); }},
+];
+
+// línea de tiempo
+let acc=0; for(const s of STEPS){ s.start=acc; acc+=s.dur; }
+const TOTAL=acc;
+const CHSPAN={}; for(const s of STEPS){ const c=CHSPAN[s.ch]||(CHSPAN[s.ch]={a:s.start,b:0}); c.b=s.start+s.dur; }
+window.TL=(()=>{const ev=[];
+  STEPS.forEach((s,i)=>{
+    if(i>0&&STEPS[i-1].ch!==s.ch&&s.ch!=='outro') ev.push([s.start,'whoosh']);
+    (s.presses||[]).forEach(([b,a,len,mode])=>{ ev.push([s.start+a,mode==='light'?'haptic':'click']); if(len>.5&&mode!=='light') ev.push([s.start+a+len,'release']); });
+    (s.taps||[]).forEach(t=>{ if(t.sfx===false||t.k==='nop') return; ev.push([s.start+t.at+(t.hold||0)*(t.ins?1:0),'tap']); });
+    if(s.holdKey) ev.push([s.start+s.holdKey[1]-.001,'tap']);
+    (s.sfx||[]).forEach(([a,type])=>ev.push([s.start+a,type]));
+  });
+  ev.sort((a,b)=>a[0]-b[0]);
+  return {dur:TOTAL,fps:30,events:ev.map(([t,type])=>({t:+t.toFixed(3),type}))};
+})();
+
+// ================= etiquetas del mapa y barra de progreso =================
+const LABELS=[
+ {btn:'action',text:'Botón de\nAcción',side:'L',y:719},
+ {btn:'volup',text:'Subir\nvolumen',side:'L',y:838},
+ {btn:'voldn',text:'Bajar\nvolumen',side:'L',y:954},
+ {btn:'side',text:'Botón\nlateral',side:'R',y:905},
+ {btn:'cam',text:'Control de\nla cámara',side:'R',y:1192},
+];
+(()=>{let svg='';
+  LABELS.forEach((l,i)=>{
+    const d=document.createElement('div'); d.className='mlab'; d.id='ml'+i; d.textContent=l.text;
+    if(l.side==='L'){d.style.right=(1080-228)+'px'; d.style.textAlign='right';} else {d.style.left='852px';}
+    d.style.top=(l.y-38)+'px'; $('map').appendChild(d);
+    const x1=l.side==='L'?240:840, x2=l.side==='L'?288:792;
+    svg+=`<line id="mline${i}" x1="${x1}" y1="${l.y}" x2="${x2}" y2="${l.y}" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-dasharray="48" stroke-dashoffset="48" opacity="0"/>`+
+         `<circle id="mdot${i}" cx="${x2}" cy="${l.y}" r="8" fill="#8ab4ff" opacity="0"/>`;
+  });
+  $('mapsvg').innerHTML=svg;
+  const tot=PROG_CH.reduce((s,c)=>s+CHSPAN[c].b-CHSPAN[c].a,0);
+  $('prog').innerHTML=PROG_CH.map(c=>`<div style="flex:${(CHSPAN[c].b-CHSPAN[c].a)/tot}"><i style="background:${CH[c].acc};width:0"></i></div>`).join('');
+})();
+
+// ================= botones físicos =================
+const BTN={action:{s:'L',top:150,h:58},volup:{s:'L',top:250,h:96},voldn:{s:'L',top:366,h:96},side:{s:'R',top:290,h:150},cam:{s:'R',top:610,h:84}};
+for(const [k,b] of Object.entries(BTN)){
+  const el=$('hw-'+k); el.style.top=b.top+'px'; el.style.height=b.h+'px'; el.style[b.s==='L'?'left':'right']=(k==='cam'?-6:-8)+'px';
+  const f=document.createElement('div'); f.className='finger'; f.id='f-'+k; $('pw').appendChild(f);
+  const r=document.createElement('div'); r.className='ring'; r.id='r-'+k; $('pw').appendChild(r);
+}
+function pressInfo(step,lt,btn){
+  let depth=0,glow=0,op=0,off=60,ring=-1;
+  for(const [b,a,len,mode] of step.presses||[]){
+    if(b!==btn) continue;
+    const k=mode==='light'?.4:1;
+    depth=Math.max(depth,k*Math.min(prog(lt,a-.08,a),1-prog(lt,a+len,a+len+.1)));
+    glow=Math.max(glow,win(lt,a-.3,a+len+.45,.15));
+    const o=win(lt,a-.45,a+len+.4,.18);
+    if(o>0){ op=Math.max(op,o); const ap=eout(prog(lt,a-.45,a-.08)), rt=prog(lt,a+len+.08,a+len+.4); off=Math.min(off,46*(1-ap)+46*rt); }
+    if(lt>=a&&lt<=a+.55&&mode!=='light') ring=Math.max(ring,prog(lt,a,a+.55));
+  }
+  return {depth,glow,op,off,ring};
+}
+
+// ================= estado y aplicación =================
+function newState(){
+  return {phone:{x:305,y:70,s:1,op:1},L:{wall:1,lock:0,home:0,cam:0,notes:0},camIn:1,dim:0,off:0,flash:0,siri:0,wallet:0,
+    vol:{op:0,lvl:.4},island:{e:0},car:{op:0,pos:0},power:{op:0,knob:0},boot:{op:0,spin:0},thumb:{op:0,p:0},
+    zoom:1,zui:0,rec:0,recT:0,camThumb:0,slide:0,hl:{},labels:[0,0,0,0,0],labelsOp:0,
+    touch:{op:0,x:0,y:0,ring:0},kb:null,recap:-1,fadeAll:0};
+}
+const cache={};
+const setOnce=(el,key,prop,val)=>{ if(cache[key]!==val){ cache[key]=val; el[prop]=val; } };
+const vis=(el,op)=>{ el.style.opacity=op; el.style.visibility=op>.001?'visible':'hidden'; };
+const titleSize=s=>{ if(s.big) return 110; const n=Math.max(...s.title.split('\n').map(x=>x.length)); return n<=13?88:n<=17?80:n<=20?70:62; };
+
+function stepAt(t){ for(let i=0;i<STEPS.length;i++){ const s=STEPS[i]; if(t<s.start+s.dur||i===STEPS.length-1) return {i,step:s,lt:Math.min(t-s.start,s.dur-1e-4)}; } }
+
+function renderAt(t){
+  t=clamp(t,0,TOTAL-1e-4);
+  const {i,step,lt}=stepAt(t), S=newState();
+  step.draw.call(step,S,lt);
+  const ch=CH[step.ch], A=ch.acc, prev=STEPS[i-1], next=STEPS[i+1];
+
+  // ---- encabezado ----
+  const title=$('title'), sub=$('sub'), pill=$('pill');
+  setOnce(title,'title','textContent',step.title); title.style.fontSize=titleSize(step)+'px';
+  setOnce(sub,'sub','textContent',step.sub||'');
+  const tOut=prog(lt,step.dur-.3,step.dur);
+  title.style.opacity=Math.min(prog(lt,0,.35),1-tOut); title.style.transform=`translateY(${(1-eout(prog(lt,0,.45)))*28}px)`;
+  sub.style.opacity=Math.min(prog(lt,.12,.5),1-tOut); sub.style.transform=`translateY(${(1-eout(prog(lt,.12,.57)))*22}px)`;
+  const pIn=prev&&prev.ch===step.ch?1:prog(lt,0,.35), pOut=next&&next.ch===step.ch?0:prog(lt,step.dur-.3,step.dur);
+  setOnce(pill,'pill','textContent',ch.pill); pill.style.opacity=Math.min(pIn,1-pOut); pill.style.borderColor=A; pill.style.color=A;
+  const b3=$('b3'); b3.style.background=`radial-gradient(circle,${hexA(A,.30)} 0%,${hexA(A,0)} 62%)`; b3.style.opacity=Math.min(pIn,1-pOut);
+  $('b1').style.transform=`translate(${Math.sin(t*.21)*60}px,${Math.cos(t*.17)*40}px)`;
+  $('b2').style.transform=`translate(${Math.cos(t*.19)*70}px,${Math.sin(t*.23)*50}px)`;
+
+  // ---- teléfono ----
+  const pw=$('pw'); pw.style.transform=`translate(${S.phone.x}px,${S.phone.y}px) scale(${S.phone.s})`; pw.style.opacity=S.phone.op;
+  for(const k of ['wall','lock','home','cam','notes']) vis($(k),S.L[k]);
+  $('cam').style.transform=`scale(${S.camIn})`;
+  vis($('dim'),S.dim); vis($('off'),S.off); vis($('flash'),Math.min(1,S.flash));
+  // siri
+  vis($('siri'),S.siri);
+  if(S.siri>0){ const g=`conic-gradient(from ${t*140}deg,#ff5f6d,#ffc371,#47e891,#3ab4ff,#a259ff,#ff5fa2,#ff5f6d)`; document.querySelectorAll('.sg').forEach(e=>e.style.background=g); }
+  // wallet
+  vis($('wallet'),S.wallet); $('wallet').style.transform=`translateY(${(1-S.wallet)*260}px)`;
+  // volumen
+  vis($('volhud'),S.vol.op); $('volfill').style.height=(clamp(S.vol.lvl)*200)+'px';
+  $('volhud').style.transform=`translateX(${(1-eout(S.vol.op))*-30}px)`;
+  // isla
+  const e=S.island.e, iw=lerp(122,316,e), ih=lerp(36,58,clamp(e,0,1.2));
+  const isl=$('island'); isl.style.width=iw+'px'; isl.style.height=ih+'px'; isl.style.left=(219-iw/2)+'px'; isl.style.borderRadius=(ih/2)+'px';
+  $('iscont').style.opacity=prog(e,.6,1);
+  // carrusel
+  vis($('carousel'),S.car.op);
+  if(S.car.op>0){ document.querySelectorAll('.citem').forEach((el,j)=>{const d=j-S.car.pos, ad=Math.abs(d);
+      el.style.transform=`translateX(${d*250}px) scale(${lerp(1,.62,clamp(ad))})`; el.style.opacity=clamp(1-ad*.55);});
+    document.querySelectorAll('#cdots i').forEach((el,j)=>{const a=clamp(1-Math.abs(j-S.car.pos)); el.style.background=`rgba(255,255,255,${.35+.65*a})`;}); }
+  // apagar
+  vis($('power'),S.power.op); $('pknob').style.transform=`translateX(${S.power.knob*304}px)`; $('ptx').style.opacity=1-S.power.knob*1.4;
+  // reinicio
+  vis($('boot'),S.boot.op);
+  if(S.boot.op>0){ const n=Math.floor(S.boot.spin*12)%8; document.querySelectorAll('#spin i').forEach((el,j)=>el.style.opacity=.25+.75*(((j-n+8)%8)===0?1:((j-n+8)%8)===7?.6:((j-n+8)%8)===6?.3:0)); }
+  // captura
+  const th=$('thumb'); vis(th,S.thumb.op);
+  if(S.thumb.op>0){ const p=S.thumb.p, sc=lerp(1,.27,p); th.style.transform=`translate(${lerp(0,22,p)}px,${lerp(0,928-22-928*.27,p)}px) scale(${sc})`; }
+  // cámara
+  $('scene').style.transform=`scale(${S.zoom})`;
+  setOnce($('zon'),'zon','textContent',S.zoom<1.05?'1×':(S.zoom.toFixed(1)+'×'));
+  vis($('zui'),S.zui); $('zstrip').style.transform=`translateY(${(S.zoom-1)*55}px)`; setOnce($('zval'),'zval','textContent',S.zoom.toFixed(1)+'×');
+  $('ctimg').style.opacity=S.camThumb;
+  vis($('rec'),S.rec); setOnce($('rec'),'rec','textContent','00:00:0'+Math.floor(S.recT));
+  const si=$('shutIn'), r=S.rec; si.style.background=r>.01?'#ff3b30':'#fff';
+  const sz=lerp(58,30,r); si.style.width=si.style.height=sz+'px'; si.style.left=si.style.top=((66-sz)/2)+'px'; si.style.borderRadius=lerp(29,7,r)+'px';
+  // toque en pantalla
+  const tc=$('touch'); vis(tc,S.touch.op);
+  if(S.touch.op>0){ tc.style.left=S.touch.x+'px'; tc.style.top=S.touch.y+'px'; tc.style.transform=`scale(${1+.25*Math.sin(Math.PI*S.touch.ring)})`; }
+
+  // ---- teclado ----
+  if(S.kb) applyKb(S.kb,t);
+
+  // ---- botones físicos ----
+  for(const [k,b] of Object.entries(BTN)){
+    const pi=pressInfo(step,lt,k), g=Math.max(pi.glow,S.hl[k]||0), sgn=b.s==='L'?1:-1;
+    const el=$('hw-'+k); el.style.transform=`translateX(${sgn*pi.depth*5}px)`;
+    el.style.boxShadow=g>.01?`0 0 ${22*g}px ${7*g}px ${hexA(A,.85*g)}`:'none';
+    el.firstChild.style.background=A; el.firstChild.style.opacity=g*.85;
+    const f=$('f-'+k), cy=b.top+b.h/2+(k==='cam'?S.slide:0);
+    vis(f,pi.op);
+    if(pi.op>0){ const x=b.s==='L'?-8-80-pi.off+pi.depth*5:478+pi.off-pi.depth*5; f.style.left=x+'px'; f.style.top=(cy-40)+'px'; }
+    const rg=$('r-'+k);
+    if(pi.ring>=0){ const p=pi.ring; vis(rg,(1-p)*.9); rg.style.borderColor=A; rg.style.left=(b.s==='L'?-2-48:472-48)+'px'; rg.style.top=(cy-48)+'px'; rg.style.transform=`scale(${lerp(.5,1.9,eout(p))})`; }
+    else vis(rg,0);
+  }
+
+  // ---- etiquetas del mapa ----
+  LABELS.forEach((l,j)=>{const p=S.labels[j]*S.labelsOp, d=$('ml'+j);
+    d.style.opacity=p; d.style.transform=`translateX(${(1-eout(S.labels[j]))*(l.side==='L'?-24:24)}px)`;
+    const ln=$('mline'+j); ln.setAttribute('opacity',p); ln.setAttribute('stroke-dashoffset',48*(1-S.labels[j]));
+    const dt=$('mdot'+j); dt.setAttribute('opacity',p); dt.setAttribute('r',8*eback(S.labels[j]));});
+
+  // ---- consejo / resumen ----
+  let tip='';
+  if(step.tipFn) tip=step.tipFn(lt);
+  else if(step.tip) tip=`<div class="tipc"><div class="ti" style="color:${A}">${ICON.bulb}</div><div>${esc(step.tip)}</div></div>`;
+  else if(S.recap>=0){ const items=[['Lateral','side'],['Volumen','vol'],['Acción','action'],['Cámara','cam'],['Combinaciones','combo'],['Teclado','kbd']];
+    tip='<div class="chips">'+items.map(([n,c],j)=>{const p=eout(prog(S.recap,1.2+j*.18,1.6+j*.18));
+      return `<div class="chip2" style="border-color:${CH[c].acc};color:${CH[c].acc};opacity:${p.toFixed(3)};transform:translateY(${((1-p)*20).toFixed(1)}px)">${ICON.check}<span style="color:#fff">${n}</span></div>`;}).join('')+'</div>'; }
+  const tipEl=$('tip'); setOnce(tipEl,'tip','innerHTML',tip);
+  const tipOp=tip?(S.recap>=0?1-tOut:Math.min(prog(lt,.45,.8),1-tOut)):0;
+  tipEl.style.opacity=tipOp; tipEl.style.transform=`translateY(${(1-eout(prog(lt,.45,.85)))*20}px)`;
+
+  // ---- progreso ----
+  document.querySelectorAll('#prog i').forEach((el,j)=>{const c=CHSPAN[PROG_CH[j]]; el.style.width=(prog(t,c.a,c.b)*100)+'%';});
+  $('prog').style.opacity=step.ch==='intro'?prog(lt,3.4,4.2):1;
+  $('fadeov').style.opacity=S.fadeAll;
+}
+
+const KBC={};
+function applyKb(kb,t){
+  // diseño visible
+  for(const [s,id] of [['abc','kabc'],['num','knum'],['emoji','kemoji']]) $(id).style.display=kb.layout===s?'block':'none';
+  // mayúsculas en las letras
+  const up=kb.shift>0;
+  if(KBC.up!==up){ KBC.up=up; for(const k of LAYOUT.abc) if(k.t==='l') KEYEL.abc[k.id].textContent=up?k.label.toUpperCase():k.label; }
+  const sh=['off','on','caps'][kb.shift];
+  if(KBC.sh!==sh){ KBC.sh=sh; $('shiftic').innerHTML=SHIFT[sh]; }
+  // teclas presionadas
+  if(KBC.pressedEl){ const k=KBC.pressedEl; k.el.style.background=k.bg; KBC.pressedEl=null; }
+  KEYEL.abc.shift.style.background=kb.shift?'#fff':'';
+  if(kb.pressed&&KEYEL[kb.layout][kb.pressed]){ const el=KEYEL[kb.layout][kb.pressed], r=keyRect(kb.layout,kb.pressed);
+    KBC.pressedEl={el,bg:el.style.background};
+    el.style.background=r.t==='s'?'#fff':r.t==='e'||r.t==='x'?'rgba(0,0,0,.12)':'#c5c9d1'; }
+  // globo de la letra
+  const pop=$('kpop');
+  if(kb.pop){ const r=keyRect(kb.layout,kb.pop), pw=r.w+24, x=clamp(r.x-12,2,438-pw-2);
+    pop.style.display='block'; pop.style.left=x+'px'; pop.style.top=(r.y-60)+'px'; pop.style.width=pw+'px'; pop.style.height=(r.h+60)+'px';
+    pop.textContent=(kb.layout==='abc'&&kb.shift)?r.label.toUpperCase():r.label; }
+  else pop.style.display='none';
+  // menú de acentos
+  const ac=$('kacc');
+  if(kb.acc){ const r=keyRect('abc','e'); ac.style.display='block'; ac.style.left=(r.x-6)+'px'; ac.style.top=(r.y-62)+'px'; ac.style.opacity=kb.acc.op;
+    const html=['e','é','è','ê','ë','ē'].map((c,j)=>`<span class="${j===kb.acc.sel?'sel':''}">${c}</span>`).join('');
+    if(KBC.acc!==html){KBC.acc=html; ac.innerHTML=html;} }
+  else ac.style.display='none';
+  $('kblank').style.opacity=kb.tp;
+  // texto con cursor
+  const ch=Array.from(kb.text), ci=kb.cur==null?ch.length:kb.cur;
+  const on=kb.since<.55||kb.tp>0||Math.floor(t*1.8)%2===0;
+  const html=esc(ch.slice(0,ci).join(''))+`<span class="cur" style="opacity:${on?1:0}"></span>`+esc(ch.slice(ci).join(''));
+  if(KBC.html!==html){KBC.html=html; $('ntext').innerHTML=html;}
+  $('ntext').style.opacity=kb.textOp;
+}
+
+window.renderAt=renderAt;
+window.TOTAL=TOTAL;
+renderAt(0);
+// Vista previa en vivo si se abre directamente en el navegador (no durante la captura)
+if(!navigator.webdriver){ const t0=performance.now(); const loop=()=>{ renderAt(((performance.now()-t0)/1000)%TOTAL); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+</script>
+</body>
+</html>
