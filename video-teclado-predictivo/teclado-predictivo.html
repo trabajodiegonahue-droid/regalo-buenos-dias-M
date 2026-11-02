@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Teclado predictivo</title>
+<!--
+  Animación del video "Tu iPhone hace trampa cuando escribes".
+  Los tiempos salen de voice-timeline.js (generado por voice.py), así cada escena
+  y cada subtítulo quedan sincronizados con la voz. renderAt(t) dibuja el cuadro t.
+-->
+<script src="voice-timeline.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#070914}
+body{font-family:Inter,"Noto Color Emoji",system-ui,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden;background:linear-gradient(180deg,#0a0d20 0%,#0e1133 55%,#090b1b 100%)}
+.blob{position:absolute;border-radius:50%}
+#b1{left:-420px;top:-380px;width:1200px;height:1200px;background:radial-gradient(circle,rgba(98,80,255,.40) 0%,rgba(98,80,255,0) 65%)}
+#b2{left:380px;top:1150px;width:1100px;height:1100px;background:radial-gradient(circle,rgba(0,160,255,.28) 0%,rgba(0,160,255,0) 65%)}
+#b3{left:-100px;top:300px;width:1300px;height:1300px;background:radial-gradient(circle,rgba(255,149,0,.22) 0%,rgba(255,149,0,0) 62%);opacity:0}
+
+#pill{position:absolute;top:64px;left:0;right:0;text-align:center}
+#pill span{display:inline-block;font-weight:700;font-size:25px;letter-spacing:5px;padding:11px 26px 10px;border-radius:999px;border:2px solid #40c8e0;color:#40c8e0;background:rgba(255,255,255,.04)}
+#cap{position:absolute;left:30px;right:30px;top:150px;height:330px;display:flex;align-items:center;justify-content:center;text-align:center}
+#capin{font-family:"Inter Display",Inter,sans-serif;font-weight:800;font-size:80px;line-height:1.08;letter-spacing:-1.5px;
+  text-shadow:0 4px 0 rgba(0,0,0,.35),0 8px 30px rgba(0,0,0,.45)}
+#capin .w{display:inline-block;margin:0 .13em;transition:none}
+#capin .w.on{color:#ffd60a}
+
+#vp{position:absolute;left:0;top:470px;width:1080px;height:1360px;overflow:hidden;transform-origin:540px 600px;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 70px,#000 1320px,transparent 1360px)}
+#pw{position:absolute;left:0;top:0;width:470px;height:960px;transform-origin:0 0}
+#phone{position:absolute;inset:0;border-radius:88px;background:linear-gradient(135deg,#767b87 0%,#33363d 28%,#555a64 62%,#26282d 100%);
+  box-shadow:0 50px 90px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.10)}
+#bezel{position:absolute;left:6px;top:6px;right:6px;bottom:6px;border-radius:82px;background:#040404}
+#screen{position:absolute;left:16px;top:16px;width:438px;height:928px;border-radius:70px;overflow:hidden;background:#fff;color:#000}
+.nhead{position:absolute;top:62px;left:20px;right:22px;display:flex;justify-content:space-between;color:#d9a300;font-size:19px;font-weight:600}
+.ntitle{position:absolute;top:236px;left:28px;font-size:30px;font-weight:800}
+#ntext{position:absolute;top:366px;left:28px;right:26px;font-size:29px;line-height:38px;color:#1c1c1e;white-space:pre-wrap;word-wrap:break-word}
+.cur{display:inline-block;width:3px;height:34px;margin:0 -1px 0 1px;vertical-align:-7px;border-radius:1.5px;background:#e5a50a}
+
+/* paneles en la zona blanca (coordenadas de pantalla del teléfono) */
+.panel{position:absolute;left:20px;width:398px;opacity:0}
+#pprob{top:432px;padding:12px 16px;border-radius:16px;background:#f2f2f7}
+#pprob .pt{font-size:15px;font-weight:700;color:#6b6b70;margin-bottom:8px}
+.pr{display:flex;align-items:center;gap:10px;height:30px}
+.pr b{width:22px;font-size:21px;text-align:center}
+.pr i{display:block;height:16px;border-radius:8px;background:#c7c7cc}
+.pr i.top{background:#ff9500}
+#pverd{top:446px;display:flex;justify-content:center;gap:14px}
+.vchip{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:14px;font-size:26px;font-weight:700;opacity:0}
+.vchip.ok{background:#e3f9e9;color:#1f9d47}
+.vchip.no{background:#ffe5e3;color:#e0352b}
+.vchip.no s{text-decoration-thickness:3px}
+.vchip svg{width:24px;height:24px}
+#pmarq{top:430px;height:150px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.mrow{position:absolute;left:0;white-space:nowrap;font-size:19px;font-weight:600;color:#3a3a3c}
+.mrow span{display:inline-block;padding:5px 12px;margin-right:8px;border-radius:12px;background:#f2f2f7}
+#pchips{top:440px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.uchip{padding:9px 16px;border-radius:14px;background:#fff4dd;border:2px solid #ff9500;font-size:21px;font-weight:700;color:#b35f00;opacity:0}
+#plegend{top:470px;display:flex;justify-content:center}
+#plegend div{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:14px;background:#eef5ff;font-size:19px;font-weight:600;color:#0a5fd1}
+#plegend i{display:block;width:24px;height:24px;border-radius:6px;background:rgba(10,132,255,.18);border:2px dashed rgba(10,132,255,.8)}
+#emoji{position:absolute;left:169px;top:430px;width:100px;height:100px;font-size:84px;line-height:100px;text-align:center;opacity:0}
+#cta{position:absolute;left:69px;top:450px;width:300px;height:76px;border-radius:38px;background:linear-gradient(135deg,#0a84ff,#40c8e0);
+  color:#fff;font-size:27px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;opacity:0;box-shadow:0 10px 26px rgba(10,132,255,.4)}
+
+/* teclado */
+#kb{position:absolute;left:0;top:628px;width:438px;height:300px}
+#kbbg{position:absolute;inset:0;background:#d2d5db}
+.key{position:absolute;height:50px;border-radius:8px;background:#fff;box-shadow:0 1.3px 0 rgba(0,0,0,.32);
+  display:flex;align-items:center;justify-content:center;font-size:23px;color:#000}
+.key.sp{background:#abb1bc;font-size:16px}
+.key .ki{width:25px;height:25px;color:#111}
+.kbi{position:absolute;top:254px;width:27px;height:27px;color:#4d525a}
+.kbhome{position:absolute;top:288px;left:152px;width:134px;height:5px;border-radius:3px;background:#000}
+#zones{position:absolute;inset:0;pointer-events:none}
+.zone{position:absolute;border-radius:9px;opacity:0}
+#bline{position:absolute;left:44.7px;top:60px;width:3px;height:74px;opacity:0;
+  background:repeating-linear-gradient(180deg,#ff3b30 0 6px,transparent 6px 11px)}
+#sbar{position:absolute;left:0;top:-44px;width:438px;height:44px;background:#d2d5db;display:flex;opacity:0}
+#sbar div{flex:1;display:flex;align-items:center;justify-content:center;font-size:18px;color:#000;border-radius:8px;margin:4px 3px}
+#sbar div+div{border-left:1px solid #b3b7bf;border-radius:0}
+#sbar div.mid{font-weight:600}
+#kpop{position:absolute;display:none;background:#fff;border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.32);text-align:center;font-size:38px;line-height:52px;color:#000}
+#touch{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;opacity:0;z-index:5;
+  background:rgba(50,54,72,.5);border:3px solid rgba(255,255,255,.95);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+#tring{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid #ff3b30;opacity:0;z-index:5}
+
+#prog{position:absolute;left:100px;top:1866px;width:880px;height:8px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+#prog i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#40c8e0,#ffd60a)}
+#fadeov{position:absolute;inset:0;background:#070914;opacity:0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="blob" id="b1"></div><div class="blob" id="b2"></div><div class="blob" id="b3"></div>
+  <div id="pill"><span>TRUCO DEL TECLADO</span></div>
+  <div id="cap"><div id="capin"></div></div>
+  <div id="vp"><div id="pw">
+    <div id="phone"><div id="bezel"></div>
+      <div id="screen">
+        <div class="nhead"><span>‹ Notas</span><span>Listo</span></div>
+        <div class="ntitle">Mensajes</div>
+        <div id="ntext"></div>
+        <div class="panel" id="pprob"><div class="pt">¿Qué letra sigue después de “Hol”?</div>
+          <div class="pr"><b>A</b><i class="top" id="barA"></i></div>
+          <div class="pr"><b>G</b><i id="barG"></i></div>
+          <div class="pr"><b>L</b><i id="barL"></i></div></div>
+        <div class="panel" id="pverd"><div class="vchip ok" id="vok"></div><div class="vchip no" id="vno"></div></div>
+        <div class="panel" id="pmarq"><div class="mrow" id="mr0" style="top:6px"></div><div class="mrow" id="mr1" style="top:56px"></div><div class="mrow" id="mr2" style="top:106px"></div></div>
+        <div class="panel" id="pchips"><div class="uchip">jajaja ★</div><div class="uchip">te quiero ★</div><div class="uchip">ya voy ★</div><div class="uchip">amor ★</div><div class="uchip">¿dónde estás? ★</div></div>
+        <div class="panel" id="plegend"><div><i></i>zona que detecta tu dedo</div></div>
+        <div id="emoji"></div>
+        <div id="cta">📲 Compártelo</div>
+        <div id="kb">
+          <div id="kbbg"></div>
+          <div id="keys"></div>
+          <div id="zones"></div>
+          <div id="bline"></div>
+          <div class="kbi" style="left:24px" data-icon="globe"></div>
+          <div class="kbi" style="left:388px" data-icon="mic"></div>
+          <div class="kbhome"></div>
+          <div id="sbar"><div></div><div class="mid"></div><div></div></div>
+          <div id="kpop"></div>
+        </div>
+        <div id="tring"></div>
+        <div id="touch"></div>
+      </div>
+    </div>
+  </div></div>
+  <div id="prog"><i></i></div>
+  <div id="fadeov"></div>
+</div>
+
+<script>
+// ================= utilidades =================
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,p)=>a+(b-a)*p;
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const eio=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const eout=p=>1-Math.pow(1-p,3);
+const eback=p=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)};
+const win=(t,a,b,f=.3)=>Math.min(prog(t,a,a+f),1-prog(t,b-f,b));
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const vis=(el,op)=>{el.style.opacity=op; el.style.visibility=op>.001?'visible':'hidden';};
+
+const ic=(d,sw=2)=>`<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON={
+ mic:ic('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',1.8),
+ globe:ic('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',1.6),
+ smile:ic('<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>',1.7),
+ del:ic('<path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><path d="m12 9 6 6"/><path d="m18 9-6 6"/>',1.7),
+ check:ic('<path d="M20 6 9 17l-5-5"/>',3.2),
+ x:ic('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',3.2),
+};
+const SHIFT={
+ off:'<svg viewBox="0 0 24 26" width="100%" height="100%"><path d="M12 2.6 2.8 12.3H8.1V19.6H15.9V12.3H21.2Z" fill="none" stroke="#111" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+ on:'<svg viewBox="0 0 24 26" width="100%" height="100%"><path d="M12 2.6 2.8 12.3H8.1V19.6H15.9V12.3H21.2Z" fill="#111" stroke="#111" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+};
+document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=ICON[el.dataset.icon]);
+$('vok').innerHTML=`${ICON.check}“Hola”`; $('vno').innerHTML=`${ICON.x}<s>“Hols”</s>`;
+
+// ================= teclado (diseño español de iOS) =================
+const KEYS=[];
+(()=>{
+  const row=(arr,y,x0)=>arr.forEach((c,i)=>KEYS.push({id:c,label:c,x:x0+i*43.2,y,w:37.6,h:50,t:'l',row:y}));
+  row('qwertyuiop'.split(''),10,5.8); row('asdfghjklñ'.split(''),72,5.8); row('zxcvbnm'.split(''),134,70.6);
+  KEYS.push({id:'shift',x:5.8,y:134,w:52,h:50,t:'s',icon:'shift'});
+  KEYS.push({id:'del',x:380.2,y:134,w:52,h:50,t:'s',icon:'del'});
+  KEYS.push({id:'123',label:'123',x:5.8,y:196,w:46,h:50,t:'s'});
+  KEYS.push({id:'emoji',x:57.4,y:196,w:46,h:50,t:'s',icon:'smile'});
+  KEYS.push({id:'space',label:'espacio',x:109,y:196,w:214,h:50,t:'w'});
+  KEYS.push({id:'ret',label:'intro',x:328.6,y:196,w:103.6,h:50,t:'s'});
+  [0,1,2].forEach(i=>KEYS.push({id:'sug'+i,x:i*146,y:-44,w:146,h:44,t:'g'}));
+})();
+const KEYEL={}, ZONEL={};
+for(const k of KEYS){
+  if(k.t==='g') continue;
+  const el=document.createElement('div'); el.className='key'+(k.t==='s'?' sp':'');
+  el.style.cssText=`left:${k.x}px;top:${k.y}px;width:${k.w}px`;
+  if(k.icon==='shift') el.innerHTML='<div class="ki" id="shiftic"></div>';
+  else if(k.icon) el.innerHTML=`<div class="ki">${ICON[k.icon]}</div>`;
+  else el.textContent=k.label;
+  if(k.t==='s'||k.t==='w') el.style.fontSize='16px';
+  $('keys').appendChild(el); KEYEL[k.id]=el;
+  if(k.t==='l'){ const z=document.createElement('div'); z.className='zone'; $('zones').appendChild(z); ZONEL[k.id]=z; }
+}
+const LETTERS=KEYS.filter(k=>k.t==='l');
+const ROWS=[10,72,134].map(y=>LETTERS.filter(k=>k.y===y).sort((a,b)=>a.x-b.x));
+const keyRect=id=>KEYS.find(k=>k.id===id);
+
+// zonas táctiles invisibles: los bordes entre teclas vecinas se corren según el peso (probabilidad) de cada letra
+function zoneRects(W){
+  const out={};
+  for(const row of ROWS){
+    const n=row.length, b=[];
+    for(let i=0;i<n-1;i++){
+      const mid=(row[i].x+row[i].w+row[i+1].x)/2, wa=W[row[i].id]??1, wb=W[row[i+1].id]??1;
+      b.push(mid+clamp((wa-wb)*14,-26,26));
+    }
+    row.forEach((k,i)=>{
+      const w=W[k.id]??1, l=i?b[i-1]:k.x-2.8, r=i<n-1?b[i]:k.x+k.w+2.8;
+      const grow=w>1?(w-1)*13:-(1-w)*9;
+      out[k.id]={x:l+1,y:k.y-6-grow+1,w:r-l-2,h:62+2*grow-2,w8:w};
+    });
+  }
+  return out;
+}
+
+function kbSim(init,taps,lt){
+  const st={ch:Array.from(init.text),shift:init.shift||0,lastInput:-9};
+  for(const e of taps){ const eff=e.at+.06; if(eff>lt) break; applyTap(st,e); st.lastInput=eff; }
+  return st;
+}
+function applyTap(st,e){
+  if(e.k==='space'){ st.ch.push(' '); return; }
+  if(e.k==='sug'){ while(st.ch.length&&st.ch[st.ch.length-1]!==' ') st.ch.pop(); st.ch.push(...Array.from(e.word+' ')); return; }
+  let c=e.k; if(st.shift) c=c.toUpperCase(); st.ch.push(c); if(st.shift===1) st.shift=0;
+}
+const typeTaps=(text,a,b)=>{const cs=Array.from(text); return cs.map((c,i)=>({k:c===' '?'space':c.toLowerCase(),at:lerp(a,b,cs.length>1?i/(cs.length-1):0)}));};
+
+// ================= voz y subtítulos =================
+const V=window.VOICE, SENT={}; V.sents.forEach((s,i)=>{s.i=i; SENT[s.id]=s;});
+V.sents.forEach((s,i)=>{ s.next=i<V.sents.length-1?V.sents[i+1].start:V.dur; });
+const wt=(id,i)=>SENT[id].words[i].t0-SENT[id].start;   // inicio relativo de la palabra i
+const wend=(id,i)=>SENT[id].words[i].t1-SENT[id].start;
+const CHUNKS=[];
+// subtítulos: cada frase se parte en bloques cortos (programación dinámica): ~2-4 palabras,
+// cortando de preferencia en la puntuación y nunca después de palabras "débiles" (la, de, que…)
+const WEAK=new Set(['la','el','los','las','de','del','que','con','y','a','en','te','lo','se','tu','un','una','por','sin','casi','más','cada','si','entre','justo','muy']);
+V.sents.forEach(s=>{
+  const W=s.words, L=W.length, P=i=>/[,…:;.!?]$/.test(W[i].w)&&W[i].w.replace(/[^\p{L}]/gu,'').length>1;
+  const cost=(i,j)=>{ const txt=W.slice(i,j).map(x=>x.w).join(' '), n=j-i; let c=10+.08*(txt.length-17)**2;
+    if(txt.length>26||n>4) c+=1000; if(n===1) c+=25;
+    if(j<L){ if(P(j-1)) c-=12; if(!/^[A-ZÑ][^\p{L}]*$/u.test(W[j-1].w)&&WEAK.has(W[j-1].w.toLowerCase().replace(/[^\p{L}]/gu,''))) c+=22; }
+    return c; };
+  const best=[0], from=[0];
+  for(let j=1;j<=L;j++){ best[j]=1e9; for(let i=Math.max(0,j-4);i<j;i++){ const v=best[i]+cost(i,j); if(v<best[j]){best[j]=v; from[j]=i;} } }
+  const parts=[]; for(let j=L;j>0;j=from[j]) parts.unshift(W.slice(from[j],j));
+  parts.forEach(p=>CHUNKS.push({words:p}));
+});
+CHUNKS.forEach((c,i)=>{ c.a=i?c.words[0].t0:0; const nx=CHUNKS[i+1]; const last=c.words[c.words.length-1];
+  c.b=nx?Math.min(nx.words[0].t0,last.t1+.6):V.dur;
+  c.html=c.words.map((w,j)=>`<span class="w" data-j="${j}">${esc(w.w)}</span>`).join(''); });
+
+// ================= escenas (una por frase de la voz) =================
+const S0={}; // taps por escena, en tiempo relativo a la frase
+const SC={
+ hook:{kb:{text:'Hol',shift:0},
+  draw(S,lt,t){ S.push=lerp(1.08,1,eout(prog(t,0,1.4))); S.zOp=1; S.zOnly=['a']; S.W.a=2.5+.35*Math.sin(t*9); S.glow=1.3;
+    S.emoji={ch:'👀',op:1-prog(lt,1.9,2.2),s:lerp(.7,1,eback(prog(t,0,.35)))*(1+.05*Math.sin(t*8))}; }},
+ nadie:{kb:{text:'Hol',shift:0},
+  draw(S,lt){ S.zOp=1-prog(lt,0,.4); S.zOnly=['a']; S.W.a=2.5; S.emoji={ch:'🤫',op:win(lt,.05,1.8,.25),s:eback(prog(lt,.05,.4))}; }},
+ iguales:{kb:{text:'',shift:1},
+  draw(S,lt,t,s){ const d=s.next-s.start; S.sweep=lerp(-80,560,prog(lt,.15,d-.2)); }},
+ zonas:{kb:{text:'',shift:1},
+  draw(S,lt,t,s){ S.zOp=1; S.zStag=lt; S.legend=win(lt,.7,s.next-s.start+1.2,.3); }},
+ cambia:{kb:{text:'',shift:1},
+  draw(S,lt,t,s){ S.zOp=1; const d=s.next-s.start, amp=win(lt,.15,d,.45);
+    LETTERS.forEach((k,i)=>S.W[k.id]=1+.6*amp*Math.sin(t*3.4+i*1.9));
+    S.legend=1-prog(lt,0,.3); }},
+ mira:{kb:{text:'',shift:1},
+  init(){ return [{k:'h',at:wt('mira',3)+.05},{k:'o',at:wt('mira',4)+.05},{k:'l',at:wt('mira',5)+.05}]; },
+  draw(S,lt,t,s,taps){ S.zOp=1; const [h,o,l]=taps.map(x=>x.at);
+    S.W.o=1+.75*eout(prog(lt,h+.05,h+.3))*(1-prog(lt,o,o+.2));
+    S.W.l=1+.75*eout(prog(lt,o+.05,o+.3))*(1-prog(lt,l,l+.2));
+    S.W.a=1+.45*eout(prog(lt,l+.05,l+.35)); }},
+ calcula:{kb:{text:'Hol',shift:0},
+  draw(S,lt){ S.zOp=1; S.W.a=1.45+.1*eout(prog(lt,.4,1.2)); S.prob={op:prog(lt,.15,.45),p:eout(prog(lt,.35,1.3))}; }},
+ agranda:{kb:{text:'Hol',shift:0},
+  draw(S,lt){ S.zOp=1; const a=wt('agranda',3); S.W.a=lerp(1.55,2.5,eback(prog(lt,a,a+.6))); S.glow=prog(lt,a,a+.4);
+    S.prob={op:1-prog(lt,0,.3),p:1}; }},
+ achica:{kb:{text:'Hol',shift:0},
+  draw(S,lt){ S.zOp=1; S.W.a=2.5; S.glow=1; const a=wt('achica',1), p=eout(prog(lt,a,a+.55));
+    for(const k of ['s','q','w','z','x']) S.W[k]=lerp(1,.5,p);
+    S.zDim=p; }},
+ entre:{kb:{text:'Hol',shift:0},
+  draw(S,lt,t,s){ S.zOp=1; S.W.a=2.5; S.glow=1; for(const k of ['s','q','w','z','x']) S.W[k]=.5; S.zDim=1;
+    const a=wt('entre',4); S.bline=prog(lt,a-.1,a+.25);
+    if(lt>a+.1){ S.touch={op:prog(lt,a+.1,a+.3),x:46.2,y:628+97,ring:0}; S.tring=(lt*1.6)%1; } }},
+ hola:{kb:{text:'Hol',shift:0},
+  init(){ return [{k:'a',at:.08,x:46.2}]; },
+  draw(S,lt){ S.zOp=1; S.W.a=2.5; S.glow=1+.6*(1-prog(lt,.08,.6)); for(const k of ['s','q','w','z','x']) S.W[k]=.5; S.zDim=1;
+    S.bline=1-prog(lt,.3,.6);
+    S.verd={op:1,ok:prog(lt,wt('hola',2),wt('hola',2)+.2),no:prog(lt,wt('hola',5),wt('hola',5)+.2)}; }},
+ millones:{kb:{text:'Hola',shift:0},
+  draw(S,lt){ const f=1-prog(lt,0,.5); S.zOp=f; S.W.a=lerp(1,2.5,f); S.glow=f; for(const k of ['s','q','w','z','x']) S.W[k]=lerp(1,.5,f); S.zDim=f;
+    S.verd={op:1-prog(lt,0,.3),ok:1,no:1}; S.marq={op:prog(lt,.3,.6),x:lt}; }},
+ tuyas:{kb:{text:'Hola',shift:0},
+  draw(S,lt,t,s){ S.marq={op:lerp(1,.18,prog(lt,0,.4)),x:SENT.millones.next-SENT.millones.start+lt*.5}; S.chips=lt; }},
+ rapido:{kb:{text:'',shift:1},
+  init(){ const s=SENT.rapido; return typeTaps('Nos vemos en el cine',.35,s.next-s.start-.35); },
+  draw(S,lt,t,s,taps){ S.chips=99; S.chipsOp=1-prog(lt,0,.3); S.marq={op:.18*(1-prog(lt,0,.3)),x:0};
+    S.zOp=.75; let j=taps.findIndex(x=>x.at>lt);
+    if(j>=0&&taps[j].k!=='space'){ const prev=j?taps[j-1].at:0; S.W[taps[j].k]=1+.9*eout(prog(lt,prev+.02,prev+.09)); } }},
+ sugiere:{kb:{text:'Te quiero ',shift:0},
+  init(){ return [{k:'m',at:.45},{k:'u',at:.75},{k:'sug',word:'mucho',key:'sug1',at:wt('sugiere',7)}]; },
+  draw(S,lt,t,s,taps){ const [m,u,g]=taps.map(x=>x.at);
+    S.sbar={op:prog(lt,.05,.3),items:lt<m+.06?['“te”','mucho','a']:lt<u+.06?['“m”','mucho','mi']:lt<g+.06?['“mu”','mucho','muchísimo']:['mucho','y','te'],
+      hl:lt>=g-.02&&lt<g+.18?1:-1}; }},
+ mente:{kb:{text:'Te quiero mucho ',shift:0},
+  draw(S,lt,t){ S.sbar={op:1-prog(lt,0,.3),items:['mucho','y','te'],hl:-1}; S.zOp=prog(lt,.1,.5); S.rainbow=t;
+    const a=wt('mente',5); S.emoji={ch:'🧠',op:prog(lt,a-.1,a+.15),s:eback(prog(lt,a-.1,a+.35))}; }},
+ comparte:{kb:{text:'Te quiero mucho ',shift:0},
+  draw(S,lt,t,s){ S.zOp=1-prog(lt,0,.5); S.rainbow=t; S.emoji={ch:'🧠',op:1-prog(lt,0,.3),s:1};
+    S.cta={op:prog(lt,.15,.4),s:eback(prog(lt,.15,.55))*(1+.04*Math.sin(Math.max(0,lt-.6)*7))};
+    S.fade=prog(t,V.dur-.5,V.dur); }},
+};
+for(const s of V.sents){ const sc=SC[s.id]; sc.taps=sc.init?sc.init():[]; }
+
+// eventos de sonido
+window.TL=(()=>{const ev=[];
+  for(const s of V.sents){ const sc=SC[s.id]; sc.taps.forEach(x=>ev.push([s.start+x.at,'tap'])); }
+  ev.push([SENT.agranda.start+wt('agranda',3),'pop']);
+  ev.push([SENT.hola.start+wt('hola',2),'ding']);
+  ev.push([SENT.hola.start+wt('hola',5),'nope']);
+  ev.push([SENT.nadie.start+.05,'pop']);
+  ev.push([SENT.mente.start+wt('mente',5)-.1,'pop']);
+  ev.push([SENT.comparte.start+.15,'pop']);
+  ev.sort((a,b)=>a[0]-b[0]);
+  return {dur:V.dur,fps:30,events:ev.map(([t,type])=>({t:+t.toFixed(3),type}))};
+})();
+
+// ================= render =================
+const MARQ=[['hola','hoy','hora','hotel','hogar','hombre','hongo','horno','hojas','hielo'],
+            ['vamos','vemos','venga','verdad','vida','viaje','video','visita','vuelvo','voy'],
+            ['casa','cine','calle','cama','café','cielo','comida','correr','cumple','clase']];
+MARQ.forEach((r,i)=>$('mr'+i).innerHTML=[...r,...r,...r].map(w=>`<span>${w}</span>`).join(''));
+const cache={};
+const setOnce=(el,key,prop,val)=>{ if(cache[key]!==val){ cache[key]=val; el[prop]=val; } };
+
+function sentAt(t){ let s=V.sents[0]; for(const x of V.sents) if(t>=x.start-.001) s=x; return s; }
+function newState(){ return {push:1,zOp:0,zOnly:null,zStag:99,zDim:0,W:{},glow:0,sweep:-999,legend:0,emoji:null,prob:null,verd:null,marq:null,
+  chips:-1,chipsOp:1,sbar:null,cta:null,bline:0,touch:null,tring:-1,rainbow:-1,fade:0}; }
+
+function renderAt(t){
+  t=clamp(t,0,V.dur-1e-4);
+  const s=sentAt(t), sc=SC[s.id], lt=t-s.start, S=newState();
+  sc.draw(S,lt,t,s,sc.taps);
+
+  // ---- teléfono (siempre enfocado en el teclado) ----
+  $('pw').style.transform='translate(46.5px,-698.6px) scale(2.1)';
+  $('vp').style.transform=`scale(${S.push})`;
+  $('b3').style.opacity=clamp(S.glow)*S.zOp*.9;
+  $('b1').style.transform=`translate(${Math.sin(t*.21)*60}px,${Math.cos(t*.17)*40}px)`;
+  $('b2').style.transform=`translate(${Math.cos(t*.19)*70}px,${Math.sin(t*.23)*50}px)`;
+
+  // ---- texto y teclas ----
+  const st=kbSim(sc.kb,sc.taps,lt);
+  const up=st.shift>0;
+  if(cache.up!==up){ cache.up=up; for(const k of LETTERS) KEYEL[k.id].textContent=up?k.label.toUpperCase():k.label; }
+  setOnce($('shiftic'),'sh','innerHTML',SHIFT[up?'on':'off']);
+  KEYEL.shift.style.background=up?'#fff':'';
+  const ch=Array.from(st.ch.join('')), on=(lt-st.lastInput)<.55||Math.floor(t*1.8)%2===0;
+  setOnce($('ntext'),'txt','innerHTML',esc(ch.join(''))+`<span class="cur" style="opacity:${on?1:0}"></span>`);
+
+  // tecla presionada + globo + toque
+  let pressed=null, pop=null, touch=S.touch;
+  for(const x of sc.taps){
+    const r=keyRect(x.key||x.k); if(!r) continue;
+    if(lt>=x.at-.02&&lt<=x.at+.13){ pressed=x.key||x.k; if(r.t==='l') pop=r; }
+    if(lt>=x.at-.13&&lt<=x.at+.25){ touch={op:win(lt,x.at-.13,x.at+.25,.07),x:(x.x??r.x+r.w/2),y:628+r.y+r.h/2}; }
+  }
+  for(const k of KEYS){ const el=KEYEL[k.id]; if(!el) continue;
+    let sh='0 1.3px 0 rgba(0,0,0,.32)';
+    if(S.sweep>-999&&k.t==='l'){ const h=clamp(1-Math.abs(k.x+k.w/2+(k.y-10)*.35-S.sweep)/55); if(h>0) sh=`0 0 0 ${3*h}px rgba(10,132,255,${h}),0 1.3px 0 rgba(0,0,0,.32)`; }
+    el.style.boxShadow=sh;
+    el.style.background=pressed===k.id?(k.t==='l'?'#c5c9d1':'#fff'):(k.id==='shift'&&up?'#fff':'');
+  }
+  const kp=$('kpop');
+  if(pop){ const pw=pop.w+24; kp.style.display='block'; kp.style.left=(pop.x-12)+'px'; kp.style.top=(pop.y-60)+'px'; kp.style.width=pw+'px'; kp.style.height=(pop.h+60)+'px'; kp.textContent=up?pop.label.toUpperCase():pop.label; }
+  else kp.style.display='none';
+  const tc=$('touch'); vis(tc,touch?touch.op:0); if(touch){ tc.style.left=touch.x+'px'; tc.style.top=touch.y+'px'; }
+  const tr=$('tring'); vis(tr,S.tring>=0&&touch?(1-S.tring)*.9:0);
+  if(S.tring>=0&&touch){ tr.style.left=touch.x+'px'; tr.style.top=touch.y+'px'; tr.style.transform=`scale(${1+S.tring*1.4})`; }
+
+  // ---- zonas táctiles ----
+  const Z=zoneRects(S.W);
+  LETTERS.forEach((k,i)=>{ const z=ZONEL[k.id], r=Z[k.id], w=r.w8;
+    let op=S.zOp*clamp(prog(S.zStag,.25+i*.035,.45+i*.035)*(S.zStag<99?1:0)+(S.zStag<99?0:1));
+    if(S.zOnly&&!S.zOnly.includes(k.id)) op=0;
+    let bg,bd,shadow='none',zi=1;
+    if(S.rainbow>=0){ const h=(S.rainbow*140+i*22)%360; bg=`hsla(${h},95%,58%,.30)`; bd=`2px solid hsla(${h},95%,50%,.9)`; }
+    else if(w>1.02){ const b=clamp((w-1)/1.2); bg=`rgba(255,149,0,${.18+.22*b})`; bd=`2.5px solid rgba(255,140,0,${.6+.4*b})`; zi=3;
+      shadow=`0 0 ${10+14*clamp(S.glow,0,1.6)}px rgba(255,149,0,${.35+.3*clamp(S.glow,0,1.6)})`; }
+    else if(w<.98){ const b=clamp((1-w)/.5); bg=`rgba(255,59,48,${.08+.06*b})`; bd=`2px dashed rgba(255,59,48,${.5+.4*b})`; }
+    else { bg='rgba(10,132,255,.14)'; bd='1.6px dashed rgba(10,132,255,.62)'; if(S.zDim) op*=lerp(1,.45,S.zDim); }
+    vis(z,op); z.style.cssText+=`;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:${bg};border:${bd};box-shadow:${shadow};z-index:${zi}`;
+  });
+  vis($('bline'),S.bline);
+
+  // ---- paneles ----
+  vis($('pprob'),S.prob?S.prob.op:0);
+  if(S.prob){ const p=S.prob.p; $('barA').style.width=(270*p)+'px'; $('barG').style.width=(40*p)+'px'; $('barL').style.width=(26*p)+'px'; }
+  vis($('pverd'),S.verd?S.verd.op:0);
+  if(S.verd){ for(const [id,v] of [['vok',S.verd.ok],['vno',S.verd.no]]){ const el=$(id); el.style.opacity=v; el.style.transform=`scale(${lerp(.6,1,eback(v))})`; } }
+  vis($('pmarq'),S.marq?S.marq.op:0);
+  if(S.marq) [0,1,2].forEach(i=>$('mr'+i).style.transform=`translateX(${-((S.marq.x*(150+i*35))+i*90)%620}px)`);
+  vis($('pchips'),S.chips>=0?S.chipsOp:0);
+  if(S.chips>=0) document.querySelectorAll('.uchip').forEach((el,j)=>{const p=prog(S.chips,.15+j*.22,.35+j*.22); el.style.opacity=p; el.style.transform=`scale(${lerp(.5,1,eback(p))})`;});
+  vis($('plegend'),S.legend);
+  const em=$('emoji'); vis(em,S.emoji?S.emoji.op:0); if(S.emoji){ setOnce(em,'em','textContent',S.emoji.ch); em.style.transform=`scale(${S.emoji.s})`; }
+  const cta=$('cta'); vis(cta,S.cta?S.cta.op:0); if(S.cta) cta.style.transform=`scale(${S.cta.s})`;
+  const sb=$('sbar'); vis(sb,S.sbar?S.sbar.op:0);
+  if(S.sbar){ [...sb.children].forEach((d,j)=>{ setOnce(d,'sb'+j,'textContent',S.sbar.items[j]); d.style.background=S.sbar.hl===j?'#fff':'transparent'; }); }
+
+  // ---- subtítulos ----
+  let c=CHUNKS.find(c=>t>=c.a&&t<c.b);
+  const capin=$('capin');
+  setOnce(capin,'cap','innerHTML',c?c.html:'');
+  if(c){ const p=c.a===0?1:prog(t,c.a,c.a+.12);
+    capin.style.opacity=p; capin.style.transform=`scale(${lerp(.86,1,eback(p))})`;
+    capin.querySelectorAll('.w').forEach((el,j)=>{ const w=c.words[j], nx=c.words[j+1]; const act=t>=w.t0-.03&&t<(nx?nx.t0:c.b)-.03;
+      el.className='w'+(act?' on':''); }); }
+
+  $('prog').firstElementChild.style.width=(t/V.dur*100)+'%';
+  $('fadeov').style.opacity=S.fade;
+}
+window.renderAt=renderAt; window.TOTAL=V.dur;
+renderAt(0);
+if(!navigator.webdriver){ const t0=performance.now(); const loop=()=>{ renderAt(((performance.now()-t0)/1000)%V.dur); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+</script>
+</body>
+</html>
