@@ -47,7 +47,19 @@ def nope():      # incorrecto (suave)
     return (np.sign(np.sin(2 * np.pi * 160 * t)) * .25 + np.sin(2 * np.pi * 120 * t) * .5) * env(n, .07) * .22
 
 
-SFX = dict(tap=tap, pop=pop, ding=ding, nope=nope)
+def whoosh():     # entrar / salir del teléfono
+    n = int(.6 * SR); nz = rng.standard_normal(n)
+    t = np.linspace(0, 1, n)
+    return (lowpass(nz, .05) * .9 + lowpass(nz, .015) * .7) * np.sin(np.pi * t) ** 2 * .28
+
+
+def zap():       # señal que viaja al cerebrito
+    n = int(.5 * SR); t = np.arange(n) / SR
+    f = 500 + 1400 * t / .5
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.minimum(1, t / .02) * env(n, .25) * .12
+
+
+SFX = dict(tap=tap, pop=pop, ding=ding, nope=nope, whoosh=whoosh, zap=zap)
 for ev in tl['events']:
     s = SFX[ev['type']](); i = int(ev['t'] * SR); j = min(N, i + len(s))
     mix[i:j] += s[:j - i]

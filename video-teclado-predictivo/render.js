@@ -17,7 +17,7 @@ async function openPage() {
   await page.goto(PAGE);
   await page.evaluate(async () => { await document.fonts.ready; });
   // fuerza la carga de emojis y fuentes en todos los estados
-  for (const t of [1, 20, 30, 40]) await page.evaluate(x => renderAt(x), t);
+  for (const t of [1, 15, 30, 45, 60]) await page.evaluate(x => renderAt(x), t);
   await page.waitForTimeout(300);
   return { browser, page };
 }

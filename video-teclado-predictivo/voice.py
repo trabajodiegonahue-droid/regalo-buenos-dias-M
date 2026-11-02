@@ -3,7 +3,7 @@
 Uso: python3 voice.py <carpeta_modelo_kokoro> <carpeta_salida> [voz]
   - carpeta_modelo_kokoro: contiene kokoro-v1.0.onnx y voices-v1.0.bin
     (https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0)
-  - voz: em_alex (hombre, por defecto) o ef_dora (mujer)
+  - voz: por defecto 'em_alex:0.7,am_onyx:0.3' (hombre, grave); también em_alex o ef_dora
 Salida: voice.wav y voice-timeline.js (window.VOICE = {...}) que usa la animación.
 """
 import json, os, re, sys
@@ -12,34 +12,43 @@ import soundfile as sf
 from kokoro_onnx import Kokoro
 
 MODEL, OUT = sys.argv[1], sys.argv[2]
-VOICE = sys.argv[3] if len(sys.argv) > 3 else 'em_alex'
+VOICE = sys.argv[3] if len(sys.argv) > 3 else 'em_alex:0.7,am_onyx:0.3'
 os.makedirs(OUT, exist_ok=True)
 
-# show = lo que se lee en pantalla; sub = cómo se pronuncia una palabra (mismo número de palabras)
+# show = lo que se lee en pantalla; sub = cómo se pronuncia una palabra (para que se entienda bien)
+LA = {'A': 'letra a', 'A,': 'letra a,', 'A.': 'letra a.', 'A…': 'letra a…', 'A»': 'letra a', 'S.': 'letra ese.', 'S…': 'letra ese…'}
 SENTS = [
-    dict(id='hook',     show='¡Tu iPhone hace trampa cada vez que escribes!', speed=1.12, gap=.12),
-    dict(id='nadie',    show='Y casi nadie lo sabe.', speed=1.08, gap=.30),
-    dict(id='iguales',  show='Las teclas se ven todas del mismo tamaño…', gap=.10),
-    dict(id='zonas',    show='pero cada una tiene una zona invisible que detecta tu dedo.', gap=.25),
-    dict(id='cambia',   show='Y esa zona cambia con cada letra que escribes.', gap=.35),
-    dict(id='mira',     show='Mira: si escribes H, O, L…', sub={'H,': 'hache,', 'O,': 'o,', 'L…': 'ele…'}, speed=1.0, gap=.12),
-    dict(id='calcula',  show='tu iPhone calcula que la letra más probable es la A.', sub={'A.': 'a.'}, gap=.25),
-    dict(id='agranda',  show='Entonces, en secreto, agranda la zona de la A…', sub={'A…': 'a…'}, gap=.15),
-    dict(id='achica',   show='y achica las letras que casi nunca irían ahí.', gap=.35),
-    dict(id='entre',    show='Así, aunque toques justo entre la A y la S…', sub={'A': 'a', 'S…': 'ese…'}, gap=.12),
-    dict(id='hola',     show='se escribe “hola”, y no “hols”.', sub={'“hola”,': 'hola,', '“hols”.': 'hols.'}, gap=.40),
-    dict(id='millones', show='Y lo hace con cada letra, comparando millones de palabras…', gap=.10),
-    dict(id='tuyas',    show='y las que tú más usas.', gap=.35),
-    dict(id='rapido',   show='Por eso puedes escribir rápido, sin mirar, y casi sin errores.', gap=.30),
-    dict(id='sugiere',  show='Y arriba te sugiere la palabra completa antes de que la termines.', gap=.40),
-    dict(id='mente',    show='Tu teclado prácticamente te lee la mente.', speed=1.02, gap=.35),
-    dict(id='comparte', show='Compártelo con alguien que no lo sabía.', gap=1.3),
+    dict(id='hook',      show='¡Tu iPhone sabe qué letra vas a tocar… antes que tú!', speed=1.1, gap=.25),
+    dict(id='ven',       show='Ven, vamos a meternos adentro para ver cómo lo hace.', gap=.35),
+    dict(id='boton',     show='Mira: cuando tocas la pantalla, no estás apretando un botón de verdad.', gap=.15),
+    dict(id='vidrio',    show='Es solo vidrio.', speed=.95, gap=.35),
+    dict(id='telarana',  show='Pero debajo del vidrio hay una telaraña invisible de rayitas que siente tu dedo.', gap=.25),
+    dict(id='avisa',     show='Y cuando la tocas, le avisa al cerebrito del iPhone: ¡aquí tocaron!', gap=.45),
+    dict(id='magia',     show='Ahora viene la parte mágica.', speed=.98, gap=.35),
+    dict(id='jardin',    show='Imagina que cada tecla es una casita con un jardín invisible alrededor.', gap=.25),
+    dict(id='tocar',     show='Si tu dedo cae en el jardín de la A, el iPhone escribe una A.', sub=LA, gap=.35),
+    dict(id='hol',       show='Ahora escribe la H, la O y la L…', sub={'H,': 'hache,', 'O': 'o,', 'L…': 'ele.'}, speed=.95, gap=.25),
+    dict(id='piensa',    show='El cerebrito piensa: ¡ya sé, quiere escribir “hola”!', gap=.25),
+    dict(id='sigue',     show='Lo que sigue tiene que ser la A.', sub=LA, gap=.3),
+    dict(id='grande',    show='Entonces, sin que lo veas, le agranda el jardín a la A…', sub=LA, gap=.15),
+    dict(id='chico',     show='y se lo achica a las letras que no van, como la S.', sub=LA, gap=.35),
+    dict(id='chueco',    show='Así, aunque tu dedo caiga medio torcido, justo en medio de la A y la S…', sub={**LA, 'A': 'letra a,'}, gap=.15),
+    dict(id='hola',      show='el iPhone escribe “hola”, y no “hols”.', gap=.45),
+    dict(id='aprende',   show='¿Y cómo sabe qué letra sigue? Porque aprendió leyendo muchísimas palabras…', gap=.15),
+    dict(id='tuyas',     show='y también aprende las que tú escribes.', gap=.35),
+    dict(id='equivocas', show='Por eso casi nunca te equivocas, aunque escribas rápido.', gap=.4),
+    dict(id='cierre',    show='Tu teclado no solo espera a que lo toques… ¡te ayuda a darle a la tecla correcta!', gap=.4),
+    dict(id='comparte',  show='Compártelo con alguien que no lo sabía.', gap=1.4),
 ]
-DEFAULT_SPEED = 1.06
+DEFAULT_SPEED = 1.05
 LEAD = 0.04            # la voz arranca casi en el cuadro 0 (gancho en el primer segundo)
 
 k = Kokoro(os.path.join(MODEL, 'kokoro-v1.0.onnx'), os.path.join(MODEL, 'voices-v1.0.bin'))
 SR = 24000
+if ':' in VOICE:  # mezcla de voces: más grave y adulta (Kokoro permite promediar estilos)
+    STYLE = sum(k.get_voice_style(n) * float(w) for n, w in (x.split(':') for x in VOICE.split(',')))
+else:
+    STYLE = VOICE
 
 
 def trim(a, thr=.012, margin=.03):
@@ -108,7 +117,7 @@ for s in SENTS:
     sub = s.get('sub', {})
     say_words = [sub.get(w, w) for w in show_words]
     say = ' '.join(say_words).replace('“', '').replace('”', '')
-    a, sr = k.create(say, voice=VOICE, speed=s.get('speed', DEFAULT_SPEED), lang='es-419')
+    a, sr = k.create(say, voice=STYLE, speed=s.get('speed', DEFAULT_SPEED), lang='es-419')
     assert sr == SR
     a = trim(a.astype(np.float32))
     dur = len(a) / SR
